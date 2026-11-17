@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         AetherFin Suite — Universal Theme Switcher & Mobile Audio Engine
+// @name         AetherFin Suite — Universal Theme Switcher & Audio Engine
 // @namespace    https://jellyfin.org/
-// @version      8.0.0
-// @description  Universal Theme Switcher (NeutralFin, Ultrachromic & Cyber-OLED), 100% phone app audio playback, and complete library theme music.
+// @version      9.0.0
+// @description  Universal Theme Switcher (NeutralFin, Ultrachromic & Cyber-OLED), multi-hover card switching, and mobile app audio.
 // @author       5H45H1K1R4N
 // @match        *://*/*
 // @grant        none
@@ -12,10 +12,10 @@
 (function () {
   'use strict';
 
-  if (window.__AETHERFIN_V8_LOADED__) return;
-  window.__AETHERFIN_V8_LOADED__ = true;
+  if (window.__AETHERFIN_V9_LOADED__) return;
+  window.__AETHERFIN_V9_LOADED__ = true;
 
-  console.log('%c[AetherFin Suite v8]%c Bulletproof Mobile & Theme Switcher Active', 
+  console.log('%c[AetherFin Suite v9]%c Responsive Card Switching & Mobile Audio Active', 
               'color: #e50914; font-weight: bold; font-size: 14px;', 'color: #06b6d4; font-weight: bold;');
 
   const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
@@ -303,7 +303,7 @@
     { keys: ["inception"], file: "inception.mp3", title: "Inception" },
     { keys: ["kalki", "kalki 2898", "bhairava"], file: "kalki.mp3", title: "Kalki 2898-AD" },
     { keys: ["slam dunk", "the first slam dunk"], file: "slam-dunk.mp3", title: "The First Slam Dunk" },
-    { keys: ["from"], file: "from.mp3", title: "FROM" },
+    { keys: ["from series", "show from", "series from"], isExactFrom: true, file: "from.mp3", title: "FROM" },
     { keys: ["jai ho"], file: "jai-ho.mp3", title: "Jai Ho" },
     { keys: ["alice in borderland", "borderland"], file: "alice-in-borderland.mp3", title: "Alice in Borderland" },
     { keys: ["grave of the fireflies", "fireflies"], file: "grave-of-fireflies.mp3", title: "Grave of the Fireflies" },
@@ -320,9 +320,8 @@
   ];
 
   /* =========================================================================
-     3. UNIVERSAL REUSABLE AUDIO PIPELINE (GUARANTEED FOR PHONE APP)
+     3. UNIVERSAL REUSABLE AUDIO PIPELINE
      ========================================================================= */
-  // Create single permanent audio element attached to document body
   let globalAudio = document.getElementById('aetherfin-global-audio');
   if (!globalAudio) {
     globalAudio = document.createElement('audio');
@@ -339,17 +338,13 @@
   let fadeTimer = null;
   let isAudioUnlocked = false;
 
-  // Unlock audio on the very first touch/click
   function unlockAudio() {
     if (isAudioUnlocked) return;
     try {
       globalAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAP8A';
       const p = globalAudio.play();
       if (p !== undefined) {
-        p.then(() => {
-          isAudioUnlocked = true;
-          console.log('[AetherFin] Mobile Audio Pipeline Unlocked!');
-        }).catch(() => {});
+        p.then(() => { isAudioUnlocked = true; }).catch(() => {});
       }
     } catch (e) {}
 
@@ -370,9 +365,18 @@
   function findThemeForText(text) {
     if (!text) return null;
     const norm = normalize(text);
+    if (!norm) return null;
+
+    // Special check for single word "from"
+    if (norm === "from" || norm.startsWith("from ") || norm.endsWith(" from")) {
+      return { title: "FROM", url: `${CDN_BASE}/from.mp3` };
+    }
+
     for (const item of THEME_MAP) {
+      if (item.isExactFrom) continue;
       for (const k of item.keys) {
-        if (norm.includes(normalize(k))) {
+        const normKey = normalize(k);
+        if (norm.includes(normKey)) {
           return {
             title: item.title,
             url: `${CDN_BASE}/${item.file}`
@@ -383,15 +387,15 @@
     return null;
   }
 
-  function stopMusic(fadeMs = 300) {
-    if (!activeTheme) return;
+  function stopMusic(fadeMs = 250) {
+    if (!activeTheme && globalAudio.paused) return;
     activeTheme = null;
     updateFloatingPill(null);
 
     if (fadeTimer) clearInterval(fadeTimer);
 
     const stepMs = 25;
-    const steps = fadeMs / stepMs;
+    const steps = Math.max(1, fadeMs / stepMs);
     const volStep = (globalAudio.volume || 0.2) / steps;
 
     fadeTimer = setInterval(() => {
@@ -410,15 +414,15 @@
     }, stepMs);
   }
 
-  function playTheme(theme, targetVolume = 0.25) {
+  function playTheme(theme, targetVolume = 0.22) {
     if (isMuted || !theme) return;
     if (activeTheme && activeTheme.url === theme.url && !globalAudio.paused) {
-      return; // Already playing
+      return; // Already playing this exact track
     }
 
     if (fadeTimer) clearInterval(fadeTimer);
 
-    // Stop if a video is actively playing in Jellyfin
+    // Don't play if movie video is actively playing in Jellyfin
     const isVideoPlaying = document.querySelector('video:not(.paused)') && !document.querySelector('video').paused;
     if (isVideoPlaying) return;
 
@@ -430,12 +434,12 @@
       globalAudio.crossOrigin = "anonymous";
       globalAudio.src = theme.url;
       globalAudio.loop = true;
-      globalAudio.volume = 0.05;
+      globalAudio.volume = 0.04;
 
       const playPromise = globalAudio.play();
       if (playPromise !== undefined) {
         playPromise.then(() => {
-          let currentVol = 0.05;
+          let currentVol = 0.04;
           const fadeIn = setInterval(() => {
             if (!activeTheme || activeTheme.url !== theme.url) {
               clearInterval(fadeIn);
@@ -448,121 +452,147 @@
             } else {
               globalAudio.volume = currentVol;
             }
-          }, 40);
-        }).catch(err => {
-          console.warn('[AetherFin] Play error on device:', err);
-        });
+          }, 35);
+        }).catch(() => {});
       }
-    } catch (e) {
-      console.warn('[AetherFin] Play exception:', e);
-    }
+    } catch (e) {}
   }
 
   /* =========================================================================
-     4. TOUCH, CLICK & ROUTE DETECTION (100% PHONE APP WORKING)
+     4. ACCURATE DETAIL PAGE & NAVIGATION STATE
      ========================================================================= */
   let isNavigatingToDetail = false;
-  let isDetailPage = false;
 
-  // Intercept taps on movie cards on mobile phone and clicks on desktop
-  function onCardTapped(target) {
-    const card = target.closest('.card, .cardBox, .listItem, a[data-itemid], button[data-id]');
+  function isCurrentlyOnDetailPage() {
+    const hash = (window.location.hash || '').toLowerCase();
+    const href = (window.location.href || '').toLowerCase();
+
+    // Explicitly non-detail pages
+    if (hash.includes('home') || hash.includes('movies') || hash.includes('tv') || 
+        hash.includes('search') || hash === '#/' || hash === '' || hash === '#!/home') {
+      return false;
+    }
+
+    // Must be an actual details route
+    return hash.includes('details') || href.includes('details') || hash.includes('item?id=');
+  }
+
+  function extractCardTitle(card) {
+    if (!card) return '';
+    const attrTitle = card.getAttribute('data-title') || card.getAttribute('aria-label') || card.getAttribute('title');
+    if (attrTitle && attrTitle.trim()) return attrTitle.trim();
+
+    const titleEl = card.querySelector('.cardText-first, .cardText, .cardTitle, .itemName');
+    if (titleEl && titleEl.textContent.trim()) return titleEl.textContent.trim();
+
+    return (card.textContent || '').trim().split('\n')[0].trim();
+  }
+
+  // Intercept taps & clicks
+  function onCardClicked(target) {
+    const card = target.closest('.card, .cardBox, .listItem, a[data-itemid]');
     if (card) {
-      const fullText = (card.textContent || '').replace(/\s+/g, ' ');
-      const theme = findThemeForText(fullText);
+      const cardContainer = card.closest('.card') || card;
+      const title = extractCardTitle(cardContainer);
+      const theme = findThemeForText(title);
       if (theme) {
         isNavigatingToDetail = true;
-        // Start theme immediately inside user touch gesture!
-        playTheme(theme, 0.25);
-        setTimeout(() => { isNavigatingToDetail = false; }, 3500);
+        playTheme(theme, 0.24);
+        setTimeout(() => { isNavigatingToDetail = false; }, 3000);
       }
     }
 
-    // Stop if user taps play video
     if (target.closest('.btnPlay, [data-action="play"], button[data-id="play"], .videoPlayButton')) {
       stopMusic(300);
     }
   }
 
-  document.addEventListener('click', (e) => {
-    onCardTapped(e.target);
-  }, true);
+  document.addEventListener('click', (e) => { onCardClicked(e.target); }, true);
+  document.addEventListener('touchend', (e) => { if (e.target) onCardClicked(e.target); }, { passive: true });
 
-  document.addEventListener('touchend', (e) => {
-    if (e.target) onCardTapped(e.target);
-  }, { passive: true });
+  // Route observer for detail page enter / exit
+  let lastDetailPageState = false;
+  function checkRouteState() {
+    const onDetail = isCurrentlyOnDetailPage();
 
-  // Route / Details Page Checker (Works with Jellyfin 12 React router)
-  function checkRoute() {
-    const hash = window.location.hash || '';
-    const href = window.location.href || '';
-    const isDetailRoute = hash.includes('details') || href.includes('details') || hash.includes('item?id=');
-
-    const detailTitleEl = document.querySelector('.itemName, .parentName, h1.itemName, .detailPagePrimaryContainer h1');
-    const docTitle = document.title ? document.title.replace('- Jellyfin', '').trim() : '';
-
-    if (isDetailRoute || detailTitleEl) {
-      isDetailPage = true;
-      const titleToMatch = detailTitleEl ? detailTitleEl.textContent.trim() : docTitle;
-      const theme = findThemeForText(titleToMatch);
+    if (onDetail) {
+      lastDetailPageState = true;
+      const titleEl = document.querySelector('.itemName, .parentName, h1.itemName, .detailPagePrimaryContainer h1');
+      const docTitle = document.title ? document.title.replace('- Jellyfin', '').trim() : '';
+      const title = titleEl ? titleEl.textContent.trim() : docTitle;
+      const theme = findThemeForText(title);
 
       if (theme) {
         if (!activeTheme || activeTheme.url !== theme.url || globalAudio.paused) {
-          playTheme(theme, 0.24);
+          playTheme(theme, 0.22);
         }
       }
     } else {
-      if (isDetailPage && !isNavigatingToDetail) {
-        isDetailPage = false;
+      if (lastDetailPageState && !isNavigatingToDetail) {
+        // User exited detail page back to library/home -> stop audio!
+        lastDetailPageState = false;
         stopMusic(300);
       }
     }
   }
 
-  window.addEventListener('popstate', checkRoute);
-  window.addEventListener('hashchange', checkRoute);
-  const routeObserver = new MutationObserver(() => {
-    checkRoute();
-  });
+  window.addEventListener('popstate', checkRouteState);
+  window.addEventListener('hashchange', checkRouteState);
+  const routeObserver = new MutationObserver(checkRouteState);
   routeObserver.observe(document.body, { childList: true, subtree: true });
 
   /* =========================================================================
-     5. DESKTOP HOVER PLAYBACK
+     5. RESPONSIVE HOVER SWITCHING (CLEAN STOP ON LEAVE & INSTANT SWITCH)
      ========================================================================= */
   let hoverTimer = null;
   let currentCardElem = null;
 
   if (!isMobile) {
     document.addEventListener('mouseover', (e) => {
-      if (isDetailPage || isNavigatingToDetail) return;
+      if (isCurrentlyOnDetailPage() || isNavigatingToDetail) return;
 
       const card = e.target.closest('.card, .cardBox, .listItem');
-      if (card && card !== currentCardElem) {
-        currentCardElem = card;
+      if (!card) return;
+
+      const cardContainer = card.closest('.card') || card;
+
+      if (cardContainer !== currentCardElem) {
+        currentCardElem = cardContainer;
         if (hoverTimer) clearTimeout(hoverTimer);
 
         hoverTimer = setTimeout(() => {
-          if (currentCardElem === card && !isNavigatingToDetail && !isDetailPage) {
-            const fullText = (card.textContent || '').replace(/\s+/g, ' ');
-            const theme = findThemeForText(fullText);
+          if (currentCardElem === cardContainer && !isCurrentlyOnDetailPage() && !isNavigatingToDetail) {
+            const title = extractCardTitle(cardContainer);
+            const theme = findThemeForText(title);
+
             if (theme) {
+              // Immediately switch audio to this new hovered card!
               playTheme(theme, 0.18);
+            } else {
+              // Hovered card has no custom theme -> stop previous music!
+              stopMusic(200);
             }
           }
-        }, 450);
+        }, 400); // 400ms intentional dwell
       }
     }, { passive: true });
 
     document.addEventListener('mouseout', (e) => {
-      if (isNavigatingToDetail || isDetailPage) return;
+      if (isCurrentlyOnDetailPage() || isNavigatingToDetail) return;
 
       const card = e.target.closest('.card, .cardBox, .listItem');
-      if (card && currentCardElem === card) {
+      if (!card) return;
+
+      const cardContainer = card.closest('.card') || card;
+
+      if (cardContainer === currentCardElem) {
         const related = e.relatedTarget;
-        if (!related || !card.contains(related)) {
+        // Check if cursor actually left this card container
+        if (!related || !cardContainer.contains(related)) {
           if (hoverTimer) clearTimeout(hoverTimer);
           currentCardElem = null;
-          stopMusic(250);
+          // Clean, instant stop when mouse leaves the card!
+          stopMusic(200);
         }
       }
     }, { passive: true });
