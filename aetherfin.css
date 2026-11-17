@@ -3,7 +3,7 @@
  * Visual Theme: Zombie Revived (MakD/zombie-release) - AMOLED Black & Minimalist UI
  * Hero Showcase: Jellyfin Media Bar with Zombie Marquee Styling
  * Audio Engine: AetherFin FX (Local Server Theme Audio & UI Feedback)
- * Shelf Engine: Native Family Watch Activity (Apple TV / Netflix Minimalist)
+ * Page Engine: Dedicated Family Activity Library Page & Header Nav Tab
  * Author: 5H45H1K1R4N
  * Repository: https://github.com/5H45H1K1R4N/aetherfin-theme
  */
@@ -93,71 +93,143 @@
 }
 
 /* =========================================================================
-   6. NATIVE FAMILY ACTIVITY HOME SHELF (Apple TV / Netflix Minimalist Design)
+   6. DEDICATED FAMILY ACTIVITY PAGE (Nav Bar Tab & Full View)
    ========================================================================= */
-.sectionFamilyActivity {
-  margin-top: 2em !important;
-  margin-bottom: 2em !important;
+
+/* Header Tab Item */
+#aetherfin-nav-activity {
+  cursor: pointer !important;
+  user-select: none !important;
+  transition: all 0.2s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
 }
 
-.sectionFamilyActivity .sectionTitleContainer {
-  display: flex !important;
-  align-items: baseline !important;
-  gap: 12px !important;
-  margin-bottom: 12px !important;
-  padding: 0 0.5% !important;
+#aetherfin-nav-activity .aetherfin-nav-icon {
+  margin-right: 6px;
+  font-size: 15px;
+  line-height: 1;
 }
 
-.sectionFamilyActivity .sectionTitle {
-  font-size: 1.35rem !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.015em !important;
-  color: #ffffff !important;
-  margin: 0 !important;
+/* Full Dedicated Activity Page Container */
+#aetherfin-activity-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 85px clamp(16px, 4vw, 48px) 60px clamp(16px, 4vw, 48px);
+  background: #0a0a0a;
+  z-index: 99;
+  display: none;
+  overflow-y: auto;
 }
 
-.family-shelf-subtitle {
-  font-size: 0.85rem !important;
-  color: rgba(255, 255, 255, 0.45) !important;
-  font-weight: 400 !important;
+#aetherfin-activity-page.active {
+  display: block !important;
 }
 
-.family-shelf-scroller {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  gap: 16px !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  padding: 6px 4px 16px 4px !important;
-  scroll-behavior: smooth !important;
-  -webkit-overflow-scrolling: touch !important;
+/* Page Header */
+.activity-page-header {
+  margin-bottom: 24px;
 }
 
-.family-shelf-scroller::-webkit-scrollbar {
-  display: none !important;
-  height: 0 !important;
+.activity-page-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
 }
 
-.family-activity-card {
-  width: 172px !important;
-  min-width: 172px !important;
-  max-width: 172px !important;
-  flex-shrink: 0 !important;
+.activity-page-title {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #ffffff;
+  margin: 0;
+}
+
+.activity-page-subtitle {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 400;
+}
+
+/* Filter Bar */
+.activity-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 16px 0;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.activity-filter-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.activity-filter-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.activity-filter-btn:hover,
+.activity-filter-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  outline: none;
+}
+
+.activity-filter-btn.active {
+  background: rgb(var(--accent, 0, 172, 111));
+  border-color: rgb(var(--accent, 0, 172, 111));
+  color: #000;
+  font-weight: 700;
+}
+
+/* Library Grid */
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
+  gap: 24px 16px;
+}
+
+@media (max-width: 600px) {
+  .activity-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 16px 12px;
+  }
+}
+
+.activity-grid-card {
   margin: 0 !important;
   cursor: pointer !important;
+  user-select: none !important;
 }
 
-.family-activity-card .cardScalable {
+.activity-grid-card .cardScalable {
   border-radius: 10px !important;
   overflow: hidden !important;
   background: #141414 !important;
   aspect-ratio: 2/3 !important;
   position: relative !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5) !important;
 }
 
-.family-activity-card img {
+.activity-grid-card img {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
@@ -165,7 +237,7 @@
 }
 
 /* Discreet Frosted Dark User Tag in Poster Corner */
-.family-card-badge {
+.activity-card-badge {
   position: absolute !important;
   top: 8px !important;
   left: 8px !important;
@@ -174,7 +246,7 @@
   align-items: center !important;
   gap: 5px !important;
   padding: 3.5px 8px !important;
-  background: rgba(10, 10, 10, 0.78) !important;
+  background: rgba(10, 10, 10, 0.8) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -186,7 +258,7 @@
   pointer-events: none !important;
 }
 
-.family-user-dot {
+.activity-user-dot {
   width: 6px !important;
   height: 6px !important;
   border-radius: 50% !important;
@@ -194,16 +266,16 @@
   flex-shrink: 0 !important;
 }
 
-.family-card-time {
+.activity-card-time {
   color: rgba(255, 255, 255, 0.45) !important;
   font-weight: 400 !important;
 }
 
-.family-activity-card .cardFooter {
+.activity-grid-card .cardFooter {
   padding: 8px 2px 2px 2px !important;
 }
 
-.family-activity-card .cardText-first {
+.activity-grid-card .cardText-first {
   font-size: 13.5px !important;
   font-weight: 600 !important;
   color: #f4f4f5 !important;
@@ -212,19 +284,11 @@
   text-overflow: ellipsis !important;
 }
 
-.family-activity-card .cardText-secondary {
+.activity-grid-card .cardText-secondary {
   font-size: 12px !important;
   color: rgba(255, 255, 255, 0.45) !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   margin-top: 2px !important;
-}
-
-@media (max-width: 768px) {
-  .family-activity-card {
-    width: 135px !important;
-    min-width: 135px !important;
-    max-width: 135px !important;
-  }
 }

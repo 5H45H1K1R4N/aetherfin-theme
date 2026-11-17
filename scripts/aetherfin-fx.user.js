@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AetherFin Suite — Universal Sound FX & Local Theme Music Engine
 // @namespace    https://jellyfin.org/
-// @version      17.0.0
+// @version      18.0.0
 // @description  Upgraded tactile UI sound effects (higher volume, modern pop chime hover, mechanical clicks), cinematic Hero Media Bar integration, and local server theme song playback engine across Web, Phone & TV.
 // @author       5H45H1K1R4N
 // @match        *://*/*
@@ -12,10 +12,10 @@
 (function () {
   'use strict';
 
-  if (window.__AETHERFIN_V17_LOADED__) return;
-  window.__AETHERFIN_V17_LOADED__ = true;
+  if (window.__AETHERFIN_V18_LOADED__) return;
+  window.__AETHERFIN_V18_LOADED__ = true;
 
-  console.log('%c[AetherFin FX v17]%c Native Family Shelf & Sound Suite Active', 
+  console.log('%c[AetherFin FX v18]%c Activity Page & Sound Suite Active', 
               'color: #00ac6f; font-weight: bold; font-size: 14px;', 'color: #ffffff; font-weight: bold;');
 
   const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
@@ -28,6 +28,14 @@
       if (el) el.remove();
     });
     document.querySelectorAll('.aetherfin-header-fame-btn').forEach(el => el.remove());
+  } catch (e) {}
+  // Clean up legacy floating buttons, modals, toasts, or old home shelf
+  try {
+    ['aetherfin-fame-btn', 'aetherfin-fame-modal', 'aether-celebration-toast', 'aether-confetti-canvas'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    });
+    document.querySelectorAll('.aetherfin-header-fame-btn, .sectionFamilyActivity').forEach(el => el.remove());
   } catch (e) {}
   // Clean up legacy multi-theme elements if present in DOM
   try {
@@ -695,7 +703,7 @@
   }
 
   /* =========================================================================
-     9. NATIVE FAMILY WATCH ACTIVITY SHELF (Apple TV / Netflix Minimalist)
+     9. DEDICATED FAMILY ACTIVITY PAGE & HEADER NAVIGATION TAB
      ========================================================================= */
   const JELLYFIN_SERVER_TOKEN = '2d2051fbff00417eb2526343d3e1450f';
 
@@ -724,20 +732,20 @@
     }
   }
 
-  async function fetchFamilyWatchFeed() {
+  async function fetchAllFamilyActivity() {
     const token = (window.ApiClient && window.ApiClient.accessToken && window.ApiClient.accessToken()) || JELLYFIN_SERVER_TOKEN;
     const headers = {
-      'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="familyshelf", Version="12.1.0", Token="${token}"`
+      'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="activitypage", Version="12.1.0", Token="${token}"`
     };
 
     const resUsers = await fetch('/Users', { headers });
-    if (!resUsers.ok) throw new Error('Failed to fetch users');
+    if (!resUsers.ok) throw new Error('Users API failed');
     const users = await resUsers.json();
 
-    const rawFeed = [];
+    const feed = [];
     for (const u of users) {
       try {
-        const url = `/Users/${u.Id}/Items?IsPlayed=true&Recursive=true&IncludeItemTypes=Movie,Episode&SortBy=DatePlayed,SortName&SortOrder=Descending&Limit=8&Fields=Overview,PrimaryImageAspectRatio`;
+        const url = `/Users/${u.Id}/Items?IsPlayed=true&Recursive=true&IncludeItemTypes=Movie,Episode&SortBy=DatePlayed,SortName&SortOrder=Descending&Limit=25&Fields=Overview,PrimaryImageAspectRatio,ProductionYear`;
         const resItems = await fetch(url, { headers });
         if (resItems.ok) {
           const data = await resItems.json();
@@ -745,7 +753,7 @@
             for (const item of data.Items) {
               const playedDate = item.UserData && item.UserData.LastPlayedDate;
               if (playedDate) {
-                rawFeed.push({
+                feed.push({
                   user: u.Name,
                   userId: u.Id,
                   itemId: item.Id,
@@ -756,7 +764,8 @@
                   indexNumber: item.IndexNumber,
                   parentIndexNumber: item.ParentIndexNumber,
                   datePlayed: playedDate,
-                  seriesId: item.SeriesId
+                  seriesId: item.SeriesId,
+                  year: item.ProductionYear
                 });
               }
             }
@@ -765,163 +774,248 @@
       } catch (err) {}
     }
 
-    // Sort chronologically descending
-    rawFeed.sort((a, b) => new Date(b.datePlayed) - new Date(a.datePlayed));
+    feed.sort((a, b) => new Date(b.datePlayed) - new Date(a.datePlayed));
+    return feed;
+  }
 
-    // Deduplicate consecutive binge watches by same user for same series
-    const distinctFeed = [];
-    const seen = new Set();
-    for (const f of rawFeed) {
-      const key = `${f.user}_${f.seriesName || f.itemId}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        distinctFeed.push(f);
-      }
-      if (distinctFeed.length >= 14) break;
+  let activityPageEl = null;
+  let cachedActivityFeed = null;
+  let lastFeedFetchTime = 0;
+  let currentFilter = 'all';
+
+  function createActivityPage() {
+    if (activityPageEl && document.body.contains(activityPageEl)) {
+      return activityPageEl;
     }
 
-    return distinctFeed;
+    activityPageEl = document.createElement('div');
+    activityPageEl.id = 'aetherfin-activity-page';
+    activityPageEl.className = 'page libraryPage focuscontainer';
+    activityPageEl.innerHTML = `
+      <div class="activity-page-header">
+        <div class="activity-page-title-row">
+          <h1 class="activity-page-title">Family Watch Activity</h1>
+          <span class="activity-page-subtitle">Recent watch history across all household profiles</span>
+        </div>
+        <div class="activity-filter-bar" id="activity-filter-bar">
+          <button class="activity-filter-btn active" data-filter="all">All Activity</button>
+          <button class="activity-filter-btn" data-filter="Movie">Movies</button>
+          <button class="activity-filter-btn" data-filter="Episode">Shows</button>
+          <button class="activity-filter-btn" data-filter="admin">👤 admin</button>
+          <button class="activity-filter-btn" data-filter="TV">📺 TV</button>
+          <button class="activity-filter-btn" data-filter="hacker">⚡ hacker</button>
+          <button class="activity-filter-btn" data-filter="prem">⭐ prem</button>
+        </div>
+      </div>
+      <div class="activity-grid" id="activity-grid">
+        <div style="color: rgba(255,255,255,0.4); font-size: 14px; padding: 24px; grid-column: 1/-1;">Loading activity...</div>
+      </div>
+    `;
+
+    // Filter pill events
+    const filterBar = activityPageEl.querySelector('#activity-filter-bar');
+    filterBar.addEventListener('click', (e) => {
+      const btn = e.target.closest('.activity-filter-btn');
+      if (btn) {
+        filterBar.querySelectorAll('.activity-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.getAttribute('data-filter');
+        renderActivityGrid();
+      }
+    });
+
+    // Mount into DOM inside main container or body
+    const mainHost = document.querySelector('.mainAnimatedPages, #reactRoot');
+    if (mainHost) {
+      mainHost.appendChild(activityPageEl);
+    } else {
+      document.body.appendChild(activityPageEl);
+    }
+
+    return activityPageEl;
   }
 
-  function isCurrentlyOnHomePage() {
-    const hash = (window.location.hash || '').toLowerCase();
-    const href = (window.location.href || '').toLowerCase();
-    return hash === '#/' || hash === '' || hash === '#!/home' || hash.includes('home') || (href.endsWith('/web/') && !hash);
-  }
+  function renderActivityGrid() {
+    if (!activityPageEl || !cachedActivityFeed) return;
+    const grid = activityPageEl.querySelector('#activity-grid');
+    if (!grid) return;
 
-  let isRenderingShelf = false;
-  let cachedShelfFeed = null;
-  let lastFeedFetchTime = 0;
+    let items = cachedActivityFeed;
+    if (currentFilter === 'Movie') {
+      items = items.filter(x => x.type === 'Movie');
+    } else if (currentFilter === 'Episode') {
+      items = items.filter(x => x.type === 'Episode');
+    } else if (currentFilter !== 'all') {
+      items = items.filter(x => x.user.toLowerCase() === currentFilter.toLowerCase());
+    }
 
-  async function injectFamilyActivityShelf() {
-    if (!isCurrentlyOnHomePage()) return;
-    if (isRenderingShelf) return;
+    if (items.length === 0) {
+      grid.innerHTML = `<div style="color: rgba(255,255,255,0.4); font-size: 14px; padding: 24px; grid-column: 1/-1;">No activity found for this filter.</div>`;
+      return;
+    }
 
-    // Check if shelf already exists in DOM
-    const existing = document.querySelector('.sectionFamilyActivity');
-    if (existing && existing.querySelector('.family-activity-card')) return;
+    grid.innerHTML = items.map(item => {
+      const posterId = item.seriesId || item.itemId;
+      const posterUrl = `/Items/${posterId}/Images/Primary?fillHeight=330&fillWidth=220&quality=85`;
+      const timeAgo = formatRelativeTime(item.datePlayed);
+      const dotColor = USER_DOT_COLORS[item.user] || '#00ac6f';
+      const isEpisode = item.type === 'Episode';
+      const mainTitle = item.seriesName ? item.seriesName : item.name;
+      const subTitle = item.seriesName ? (isEpisode && item.indexNumber ? `S${item.parentIndexNumber || 1}:E${item.indexNumber} - ${item.name}` : item.name) : (item.year ? `${item.year}` : 'Movie');
 
-    // Find the home sections container
-    const homeSections = document.querySelector('.homeSectionsContainer, [data-role="page"]:not(.hide) .homeSectionsContainer, .page:not(.hide) .homeSectionsContainer, .page:not(.hide) .sections');
-    if (!homeSections) return;
-
-    isRenderingShelf = true;
-
-    try {
-      // Re-fetch data if older than 60 seconds
-      if (!cachedShelfFeed || (Date.now() - lastFeedFetchTime) > 60000) {
-        cachedShelfFeed = await fetchFamilyWatchFeed();
-        lastFeedFetchTime = Date.now();
-      }
-
-      if (!cachedShelfFeed || cachedShelfFeed.length === 0) {
-        isRenderingShelf = false;
-        return;
-      }
-
-      // Check again in case route changed during fetch
-      if (!isCurrentlyOnHomePage()) {
-        isRenderingShelf = false;
-        return;
-      }
-
-      // Build section container
-      let shelfEl = document.querySelector('.sectionFamilyActivity');
-      if (!shelfEl) {
-        shelfEl = document.createElement('div');
-        shelfEl.className = 'verticalSection verticalSection-cards sectionFamilyActivity';
-
-        // Insert after first or second section (e.g. Next Up or Continue Watching)
-        const sections = homeSections.querySelectorAll('.verticalSection');
-        if (sections.length >= 2) {
-          sections[1].after(shelfEl);
-        } else if (sections.length === 1) {
-          sections[0].after(shelfEl);
-        } else {
-          homeSections.prepend(shelfEl);
-        }
-      }
-
-      // Render cards
-      const cardsHtml = cachedShelfFeed.map(item => {
-        const posterId = item.seriesId || item.itemId;
-        const posterUrl = `/Items/${posterId}/Images/Primary?fillHeight=330&fillWidth=220&quality=85`;
-        const timeAgo = formatRelativeTime(item.datePlayed);
-        const dotColor = USER_DOT_COLORS[item.user] || '#00ac6f';
-        const isEpisode = item.type === 'Episode';
-        const mainTitle = item.seriesName ? item.seriesName : item.name;
-        const subTitle = item.seriesName ? (isEpisode && item.indexNumber ? `S${item.parentIndexNumber || 1}:E${item.indexNumber} - ${item.name}` : item.name) : (item.type || 'Movie');
-
-        return `
-          <div class="card portraitCard family-activity-card card-hoverable" tabindex="0" data-id="${item.itemId}">
-            <div class="cardBox visualCardBox">
-              <div class="cardScalable">
-                <img src="${posterUrl}" alt="${mainTitle}" loading="lazy" onerror="this.src='/web/touchicon144.39209dd2362c0db7c673.png';" />
-                <div class="family-card-badge">
-                  <span class="family-user-dot" style="background: ${dotColor};"></span>
-                  <span>${item.user}</span>
-                  <span class="family-card-time">• ${timeAgo}</span>
-                </div>
-              </div>
-              <div class="cardFooter">
-                <div class="cardText cardText-first" title="${mainTitle}">${mainTitle}</div>
-                <div class="cardText cardText-secondary" title="${subTitle}">${subTitle}</div>
+      return `
+        <div class="card portraitCard activity-grid-card card-hoverable" tabindex="0" data-id="${item.itemId}">
+          <div class="cardBox visualCardBox">
+            <div class="cardScalable">
+              <img src="${posterUrl}" alt="${mainTitle}" loading="lazy" onerror="this.src='/web/touchicon144.39209dd2362c0db7c673.png';" />
+              <div class="activity-card-badge">
+                <span class="activity-user-dot" style="background: ${dotColor};"></span>
+                <span>${item.user}</span>
+                <span class="activity-card-time">• ${timeAgo}</span>
               </div>
             </div>
-          </div>
-        `;
-      }).join('');
-
-      shelfEl.innerHTML = `
-        <div class="sectionTitleContainer sectionTitleContainer-cards">
-          <h2 class="sectionTitle sectionTitle-cards">Family Activity</h2>
-          <span class="family-shelf-subtitle">Recently watched in your household</span>
-        </div>
-        <div class="emby-scroller">
-          <div class="itemsContainer itemsContainer-cards family-shelf-scroller">
-            ${cardsHtml}
+            <div class="cardFooter">
+              <div class="cardText cardText-first" title="${mainTitle}">${mainTitle}</div>
+              <div class="cardText cardText-secondary" title="${subTitle}">${subTitle}</div>
+            </div>
           </div>
         </div>
       `;
+    }).join('');
 
-      // Attach click and keyboard navigation
-      shelfEl.querySelectorAll('.family-activity-card').forEach(card => {
-        const id = card.getAttribute('data-id');
-        const goToDetail = () => {
-          if (id) {
-            window.location.hash = `#!/details?id=${id}`;
-          }
-        };
+    // Attach navigation clicks
+    grid.querySelectorAll('.activity-grid-card').forEach(card => {
+      const id = card.getAttribute('data-id');
+      const goToDetail = () => {
+        if (id) window.location.hash = `#!/details?id=${id}`;
+      };
+      card.addEventListener('click', goToDetail);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === 'Select' || e.keyCode === 13) goToDetail();
+      });
+    });
+  }
 
-        card.addEventListener('click', goToDetail);
-        card.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === 'Select' || e.keyCode === 13) {
-            goToDetail();
-          }
-        });
+  async function loadActivityFeedData() {
+    if (!cachedActivityFeed || (Date.now() - lastFeedFetchTime) > 60000) {
+      try {
+        cachedActivityFeed = await fetchAllFamilyActivity();
+        lastFeedFetchTime = Date.now();
+      } catch (e) {
+        console.warn('[AetherFin] Error fetching family activity:', e);
+      }
+    }
+    renderActivityGrid();
+  }
+
+  /* -------------------------------------------------------------------------
+     HEADER NAVIGATION TAB INJECTION (Next to Favorites, Movies, Shows)
+     ------------------------------------------------------------------------- */
+  function injectActivityHeaderTab() {
+    if (document.getElementById('aetherfin-nav-activity')) return;
+
+    // Find the header elements
+    const header = document.querySelector('.skinHeader, header, .headerTop, #reactRoot header');
+    if (!header) return;
+
+    // Search for the element containing text "Shows"
+    let targetLink = null;
+    const candidates = header.querySelectorAll('a, button, [role="tab"], .navMenuOption, .headerButton, .MuiButtonBase-root, .emby-tab-button');
+    for (const el of candidates) {
+      const txt = (el.textContent || '').trim().toLowerCase();
+      if (txt === 'shows' || txt.endsWith('shows') || txt.includes('shows')) {
+        targetLink = el.closest('a, button, [role="tab"], .navMenuOption, .headerButton, .MuiButtonBase-root, .emby-tab-button') || el;
+        break;
+      }
+    }
+
+    // Fallback to "Movies" if "Shows" is not found
+    if (!targetLink) {
+      for (const el of candidates) {
+        const txt = (el.textContent || '').trim().toLowerCase();
+        if (txt === 'movies' || txt.endsWith('movies') || txt.includes('movies')) {
+          targetLink = el.closest('a, button, [role="tab"], .navMenuOption, .headerButton, .MuiButtonBase-root, .emby-tab-button') || el;
+          break;
+        }
+      }
+    }
+
+    if (!targetLink) return;
+
+    // Clone targetLink to inherit identical styles, heights, typography, and hover physics
+    const activityBtn = targetLink.cloneNode(true);
+    activityBtn.id = 'aetherfin-nav-activity';
+    activityBtn.setAttribute('data-nav', 'activity');
+    activityBtn.removeAttribute('href');
+
+    // Replace text and icon inside clone cleanly
+    const allSpans = activityBtn.querySelectorAll('span, div, p');
+    if (allSpans.length >= 2) {
+      // First span is typically icon, last span is text
+      allSpans[0].textContent = '👥';
+      allSpans[allSpans.length - 1].textContent = 'Activity';
+    } else if (allSpans.length === 1) {
+      allSpans[0].textContent = 'Activity';
+    } else {
+      activityBtn.innerHTML = `<span class="aetherfin-nav-icon">👥</span> <span>Activity</span>`;
+    }
+
+    // Click handler to navigate
+    activityBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      window.location.hash = '#!/activity';
+    });
+
+    // Insert immediately after Shows!
+    targetLink.after(activityBtn);
+    console.log('[AetherFin] Added Activity page navigation tab to header.');
+  }
+
+  /* -------------------------------------------------------------------------
+     ROUTE CONTROLLER (Handles #!/activity Page View)
+     ------------------------------------------------------------------------- */
+  function updateActivityPageRoute() {
+    const isActivityRoute = (window.location.hash || '').startsWith('#!/activity');
+    const activityBtn = document.getElementById('aetherfin-nav-activity');
+    const page = createActivityPage();
+
+    if (isActivityRoute) {
+      page.classList.add('active');
+      if (activityBtn) {
+        activityBtn.classList.add('emby-tab-button-active', 'active', 'buttonActive', 'Mui-selected');
+      }
+
+      // Hide other background Jellyfin pages
+      document.querySelectorAll('.mainAnimatedPages > .page:not(#aetherfin-activity-page), #reactRoot > div:not(#aetherfin-activity-page)').forEach(el => {
+        if (!el.classList.contains('skinHeader') && !el.closest('.skinHeader')) {
+          el.style.display = 'none';
+        }
       });
 
-      console.log('[AetherFin] Native Family Watch Activity shelf mounted successfully.');
-    } catch (e) {
-      console.warn('[AetherFin] Error mounting Family Shelf:', e);
-    } finally {
-      isRenderingShelf = false;
+      loadActivityFeedData();
+    } else {
+      if (page) page.classList.remove('active');
+      if (activityBtn) {
+        activityBtn.classList.remove('emby-tab-button-active', 'active', 'buttonActive', 'Mui-selected');
+      }
+
+      // Restore other background pages
+      document.querySelectorAll('.mainAnimatedPages > .page, #reactRoot > div').forEach(el => {
+        if (el !== page && el.style.display === 'none') {
+          el.style.display = '';
+        }
+      });
     }
   }
 
-  // Periodic check and route observer for Home Screen mounting
+  // Periodic checks to keep header button mounted across view transitions
   setInterval(() => {
-    if (isCurrentlyOnHomePage()) {
-      injectFamilyActivityShelf();
-    } else {
-      // Remove shelf when not on home page to keep views clean
-      const shelf = document.querySelector('.sectionFamilyActivity');
-      if (shelf) shelf.remove();
-    }
-  }, 1800);
+    injectActivityHeaderTab();
+    updateActivityPageRoute();
+  }, 1000);
 
-  window.addEventListener('hashchange', () => {
-    setTimeout(injectFamilyActivityShelf, 300);
-  });
+  window.addEventListener('hashchange', updateActivityPageRoute);
+  window.addEventListener('popstate', updateActivityPageRoute);
 
 })();
