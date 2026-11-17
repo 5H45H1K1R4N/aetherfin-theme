@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         AetherFin Suite — Universal Theme Switcher & Audio Engine
+// @name         AetherFin Suite — Universal Theme Switcher & Local Audio Engine
 // @namespace    https://jellyfin.org/
-// @version      9.0.0
-// @description  Universal Theme Switcher (NeutralFin, Ultrachromic & Cyber-OLED), multi-hover card switching, and mobile app audio.
+// @version      10.0.0
+// @description  Universal Theme Switcher (NeutralFin, Ultrachromic, Cyber-OLED), Local Server Audio Engine, Mobile App Audio & Instant Hover Switching.
 // @author       5H45H1K1R4N
 // @match        *://*/*
 // @grant        none
@@ -12,13 +12,28 @@
 (function () {
   'use strict';
 
-  if (window.__AETHERFIN_V9_LOADED__) return;
-  window.__AETHERFIN_V9_LOADED__ = true;
+  if (window.__AETHERFIN_V10_LOADED__) return;
+  window.__AETHERFIN_V10_LOADED__ = true;
 
-  console.log('%c[AetherFin Suite v9]%c Responsive Card Switching & Mobile Audio Active', 
-              'color: #e50914; font-weight: bold; font-size: 14px;', 'color: #06b6d4; font-weight: bold;');
+  console.log('%c[AetherFin Suite v10]%c Local Audio Engine & Universal Mobile/Desktop Active', 
+              'color: #e50914; font-weight: bold; font-size: 14px;', 'color: #10b981; font-weight: bold;');
 
   const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+  // Automatically enable native theme song preferences in browser/webview client storage
+  try {
+    localStorage.setItem('enableThemeSongs', 'true');
+    localStorage.setItem('enableBackdrops', 'true');
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.endsWith('-enableThemeSongs') || k === 'enableThemeSongs')) {
+        localStorage.setItem(k, 'true');
+      }
+      if (k && (k.endsWith('-enableBackdrops') || k === 'enableBackdrops')) {
+        localStorage.setItem(k, 'true');
+      }
+    }
+  } catch (e) {}
 
   /* =========================================================================
      1. THEME SWITCHER ENGINE (NeutralFin, Ultrachromic, Cyber-OLED)
@@ -242,29 +257,6 @@
     btn.setAttribute('role', 'button');
     btn.setAttribute('aria-label', 'Theme Switcher');
     btn.title = 'Change Theme & Appearance';
-    btn.style.cssText = `
-      position: fixed;
-      bottom: 24px;
-      left: 20px;
-      z-index: 999998;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      background: rgba(24, 24, 27, 0.9);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-      padding: 8px 14px;
-      border-radius: 9999px;
-      color: #f4f4f5;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      user-select: none;
-      transition: all 0.2s ease;
-    `;
     btn.innerHTML = `<span style="font-size: 15px;">🎨</span><span>Theme</span>`;
 
     btn.addEventListener('click', (e) => {
@@ -279,48 +271,49 @@
   setInterval(ensureFloatingThemeButton, 1000);
 
   /* =========================================================================
-     2. COMPLETE THEME AUDIO DATABASE (33 TITLES)
+     2. LOCAL SERVER THEME SONG DATABASE (Direct Local /Audio Stream)
      ========================================================================= */
-  const CDN_BASE = "https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/audio/themes";
-
-  const THEME_MAP = [
-    { keys: ["interstellar"], file: "interstellar.mp3", title: "Interstellar" },
-    { keys: ["3 idiots", "three idiots"], file: "3-idiots.mp3", title: "3 Idiots" },
-    { keys: ["toxic"], file: "toxic.mp3", title: "Toxic" },
-    { keys: ["stranger things"], file: "stranger-things.mp3", title: "Stranger Things" },
-    { keys: ["dhoni", "ms dhoni", "m.s. dhoni", "untold story"], file: "ms-dhoni.mp3", title: "M.S. Dhoni" },
-    { keys: ["tokyo drift", "fast and the furious tokyo drift", "fast and furious tokyo drift"], file: "tokyo-drift.mp3", title: "Tokyo Drift" },
-    { keys: ["phata poster", "nikhla hero", "agal bagal"], file: "phata-poster.mp3", title: "Phata Poster Nikhla Hero" },
-    { keys: ["iron man", "ironman"], file: "iron-man.mp3", title: "Iron Man" },
-    { keys: ["avengers", "the avengers"], file: "avengers.mp3", title: "The Avengers" },
-    { keys: ["doraemon", "undersea devil"], file: "doraemon.mp3", title: "Doraemon" },
-    { keys: ["jailer"], file: "jailer-2.mp3", title: "Jailer 2" },
-    { keys: ["premada oorali", "premada"], file: "premada-oorali.mp3", title: "Premada Oorali" },
-    { keys: ["your name", "kimi no na wa"], file: "your-name.mp3", title: "Your Name." },
-    { keys: ["hanuman ansh", "hanuman"], file: "hanuman-ansh.mp3", title: "Hanuman Ansh" },
-    { keys: ["spider-man", "spiderman", "brand new day"], file: "spider-man.mp3", title: "Spider-Man" },
-    { keys: ["breaking bad"], file: "breaking-bad.mp3", title: "Breaking Bad" },
-    { keys: ["inception"], file: "inception.mp3", title: "Inception" },
-    { keys: ["kalki", "kalki 2898", "bhairava"], file: "kalki.mp3", title: "Kalki 2898-AD" },
-    { keys: ["slam dunk", "the first slam dunk"], file: "slam-dunk.mp3", title: "The First Slam Dunk" },
-    { keys: ["from series", "show from", "series from"], isExactFrom: true, file: "from.mp3", title: "FROM" },
-    { keys: ["jai ho"], file: "jai-ho.mp3", title: "Jai Ho" },
-    { keys: ["alice in borderland", "borderland"], file: "alice-in-borderland.mp3", title: "Alice in Borderland" },
-    { keys: ["grave of the fireflies", "fireflies"], file: "grave-of-fireflies.mp3", title: "Grave of the Fireflies" },
-    { keys: ["princess kaguya", "kaguya"], file: "princess-kaguya.mp3", title: "The Tale of The Princess Kaguya" },
-    { keys: ["final destination"], file: "final-destination.mp3", title: "Final Destination 5" },
-    { keys: ["googly"], file: "googly.mp3", title: "Googly" },
-    { keys: ["bridge to terabithia", "terabithia"], file: "bridge-to-terabithia.mp3", title: "Bridge to Terabithia" },
-    { keys: ["bhooth bangla", "bhoot bangla"], file: "bhooth-bangla.mp3", title: "Bhooth Bangla" },
-    { keys: ["i ve always liked you", "ive always liked you", "always liked you"], file: "i-ve-always-liked-you.mp3", title: "I've Always Liked You" },
-    { keys: ["ikka"], file: "ikka.mp3", title: "Ikka" },
-    { keys: ["ramayana"], file: "ramayana.mp3", title: "Ramayana" },
-    { keys: ["udta teer"], file: "udta-teer.mp3", title: "Udta Teer" },
-    { keys: ["visionquest", "vision quest"], file: "vision-quest.mp3", title: "VisionQuest" }
+  const LOCAL_SERVER_THEMES = [
+    { keys: ["3 idiots", "three idiots"], streamUrl: "/Audio/6ba6543f2cbe37cce0d0af6fe3908bab/stream.mp3", title: "3 Idiots" },
+    { keys: ["alice in borderland", "borderland"], streamUrl: "/Audio/6b76cd76c93918931e119b56e0e3faf1/stream.mp3", title: "Alice in Borderland" },
+    { keys: ["avengers", "the avengers"], streamUrl: "/Audio/e9ea5d1e34c6208483fcb4652733ec27/stream.mp3", title: "The Avengers" },
+    { keys: ["bhooth bangla", "bhoot bangla"], streamUrl: "/Audio/441f9392069cb989a20217dc312a6852/stream.mp3", title: "Bhooth Bangla" },
+    { keys: ["breaking bad"], streamUrl: "/Audio/2823a020f96c35d576795c1f5c1a279c/stream.mp3", title: "Breaking Bad" },
+    { keys: ["bridge to terabithia", "terabithia"], streamUrl: "/Audio/99348b19c152a7b853b3c3912ca4271b/stream.mp3", title: "Bridge to Terabithia" },
+    { keys: ["doraemon", "undersea devil"], streamUrl: "/Audio/eab7b766a70eb94640b5b94686b29cb8/stream.mp3", title: "Doraemon" },
+    { keys: ["tokyo drift", "fast and the furious tokyo drift", "fast and furious tokyo drift"], streamUrl: "/Audio/16747c25ad27ab5ea284ed7944e59694/stream.mp3", title: "Tokyo Drift" },
+    { keys: ["final destination"], streamUrl: "/Audio/23b6b8e9667c28be8d8cad1aefd0544f/stream.mp3", title: "Final Destination 5" },
+    { keys: ["slam dunk", "the first slam dunk"], streamUrl: "/Audio/fab5533bff0069ae1d1a81441cc0b8fe/stream.mp3", title: "The First Slam Dunk" },
+    { keys: ["from series", "show from", "series from"], isExactFrom: true, streamUrl: "/Audio/49a9933e90dc941f2cc2efc092f6b79d/stream.mp3", title: "FROM" },
+    { keys: ["googly"], streamUrl: "/Audio/af07178ff6e7a4b737b1a0ecc424152f/stream.mp3", title: "Googly" },
+    { keys: ["grave of the fireflies", "fireflies"], streamUrl: "/Audio/5c0a14098ef7d1b203cf8960cd35c330/stream.mp3", title: "Grave of the Fireflies" },
+    { keys: ["ikka"], streamUrl: "/Audio/5a43e5d384eb514973f8b6c4268f8298/stream.mp3", title: "Ikka" },
+    { keys: ["inception"], streamUrl: "/Audio/22d43c99d7a50607930013b0a4938f35/stream.mp3", title: "Inception" },
+    { keys: ["interstellar"], streamUrl: "/Audio/50574993365efe65be557fa0905a37ae/stream.mp3", title: "Interstellar" },
+    { keys: ["iron man 2"], streamUrl: "/Audio/5b3d5bf75e85c0af0725f72da28c3416/stream.mp3", title: "Iron Man 2" },
+    { keys: ["iron man 3"], streamUrl: "/Audio/93bf19a14de6ae9b87af5c0e9e9c12f4/stream.mp3", title: "Iron Man 3" },
+    { keys: ["iron man", "ironman"], streamUrl: "/Audio/725b5e3a127ad7b950bcf77f4d2689ec/stream.mp3", title: "Iron Man" },
+    { keys: ["jai ho"], streamUrl: "/Audio/a67123e5ca2fa34d2cfe359c29c3bb25/stream.mp3", title: "Jai Ho" },
+    { keys: ["jailer"], streamUrl: "/Audio/b67364625cab6bb82bdaa4e40039007f/stream.mp3", title: "Jailer 2" },
+    { keys: ["kalki", "kalki 2898", "bhairava"], streamUrl: "/Audio/7ef3fd66216d0176e3347d61c5f11aeb/stream.mp3", title: "Kalki 2898-AD" },
+    { keys: ["dhoni", "ms dhoni", "m.s. dhoni", "untold story"], streamUrl: "/Audio/af07545b6b0ad4e8402d920403a50b79/stream.mp3", title: "M.S. Dhoni" },
+    { keys: ["phata poster", "nikhla hero", "agal bagal"], streamUrl: "/Audio/4052aae360684c5f2b5ebd9749192afc/stream.mp3", title: "Phata Poster Nikhla Hero" },
+    { keys: ["spider-man", "spiderman", "brand new day"], streamUrl: "/Audio/910b987f1bb263e83d97144174d24cb5/stream.mp3", title: "Spider-Man" },
+    { keys: ["stranger things"], streamUrl: "/Audio/6e9a17cac145d8d51f55e106a5e1e67f/stream.mp3", title: "Stranger Things" },
+    { keys: ["princess kaguya", "kaguya"], streamUrl: "/Audio/c7c526c5506d6cb4a81b98df51f5db6c/stream.mp3", title: "The Tale of The Princess Kaguya" },
+    { keys: ["toxic"], streamUrl: "/Audio/60594c74acdd6dd572ebd37773a751bd/stream.mp3", title: "Toxic" },
+    { keys: ["udta teer"], streamUrl: "/Audio/3bcaf0d6219288c7794fbb2cb9f85937/stream.mp3", title: "Udta Teer" },
+    { keys: ["visionquest", "vision quest"], streamUrl: "/Audio/aa9cfb350481d949dccf870b06d5d054/stream.mp3", title: "VisionQuest" },
+    { keys: ["your name", "kimi no na wa"], streamUrl: "/Audio/de6b56676a3c8a3ab1ca0563d1421014/stream.mp3", title: "Your Name." },
+    // Fallback CDN tracks for unindexed single-file media
+    { keys: ["hanuman ansh", "hanuman"], streamUrl: "https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/audio/themes/hanuman-ansh.mp3", title: "Hanuman Ansh" },
+    { keys: ["premada oorali", "premada"], streamUrl: "https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/audio/themes/premada-oorali.mp3", title: "Premada Oorali" },
+    { keys: ["i ve always liked you", "ive always liked you", "always liked you"], streamUrl: "https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/audio/themes/i-ve-always-liked-you.mp3", title: "I've Always Liked You" },
+    { keys: ["ramayana"], streamUrl: "https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/audio/themes/ramayana.mp3", title: "Ramayana" }
   ];
 
   /* =========================================================================
-     3. UNIVERSAL REUSABLE AUDIO PIPELINE
+     3. UNIVERSAL REUSABLE AUDIO PIPELINE (Direct HTMLAudioElement)
      ========================================================================= */
   let globalAudio = document.getElementById('aetherfin-global-audio');
   if (!globalAudio) {
@@ -328,6 +321,7 @@
     globalAudio.id = 'aetherfin-global-audio';
     globalAudio.setAttribute('playsinline', '');
     globalAudio.setAttribute('webkit-playsinline', '');
+    // NOTE: NEVER set crossOrigin for same-origin audio streams to prevent Android WebView MediaPlayer errors!
     globalAudio.preload = 'auto';
     globalAudio.style.display = 'none';
     document.body.appendChild(globalAudio);
@@ -336,25 +330,26 @@
   let activeTheme = null;
   let isMuted = false;
   let fadeTimer = null;
-  let isAudioUnlocked = false;
+  let audioUnlocked = false;
 
-  function unlockAudio() {
-    if (isAudioUnlocked) return;
+  // Seamless touch unlock for Mobile App WebViews without resetting src
+  function unlockAudioEngine() {
+    if (audioUnlocked) return;
     try {
-      globalAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAP8A';
       const p = globalAudio.play();
       if (p !== undefined) {
-        p.then(() => { isAudioUnlocked = true; }).catch(() => {});
+        p.then(() => {
+          audioUnlocked = true;
+          if (!activeTheme) {
+            globalAudio.pause();
+          }
+        }).catch(() => {});
       }
     } catch (e) {}
-
-    ['touchstart', 'touchend', 'click', 'pointerdown'].forEach(evt => {
-      document.removeEventListener(evt, unlockAudio);
-    });
   }
 
   ['touchstart', 'touchend', 'click', 'pointerdown'].forEach(evt => {
-    document.addEventListener(evt, unlockAudio, { passive: true, once: false });
+    document.addEventListener(evt, unlockAudioEngine, { passive: true });
   });
 
   function normalize(str) {
@@ -367,19 +362,18 @@
     const norm = normalize(text);
     if (!norm) return null;
 
-    // Special check for single word "from"
     if (norm === "from" || norm.startsWith("from ") || norm.endsWith(" from")) {
-      return { title: "FROM", url: `${CDN_BASE}/from.mp3` };
+      return { title: "FROM", url: "/Audio/49a9933e90dc941f2cc2efc092f6b79d/stream.mp3" };
     }
 
-    for (const item of THEME_MAP) {
+    for (const item of LOCAL_SERVER_THEMES) {
       if (item.isExactFrom) continue;
       for (const k of item.keys) {
         const normKey = normalize(k);
         if (norm.includes(normKey)) {
           return {
             title: item.title,
-            url: `${CDN_BASE}/${item.file}`
+            url: item.streamUrl
           };
         }
       }
@@ -431,7 +425,6 @@
 
     try {
       globalAudio.pause();
-      globalAudio.crossOrigin = "anonymous";
       globalAudio.src = theme.url;
       globalAudio.loop = true;
       globalAudio.volume = 0.04;
@@ -439,6 +432,7 @@
       const playPromise = globalAudio.play();
       if (playPromise !== undefined) {
         playPromise.then(() => {
+          audioUnlocked = true;
           let currentVol = 0.04;
           const fadeIn = setInterval(() => {
             if (!activeTheme || activeTheme.url !== theme.url) {
@@ -453,9 +447,23 @@
               globalAudio.volume = currentVol;
             }
           }, 35);
-        }).catch(() => {});
+        }).catch((err) => {
+          console.log("[AetherFin] Autoplay waiting for user touch gesture:", err.message);
+          // Auto-resume on next user touch anywhere
+          const resumeOnTouch = () => {
+            if (activeTheme && activeTheme.url === theme.url && globalAudio.paused) {
+              globalAudio.play().catch(() => {});
+            }
+            document.removeEventListener('touchstart', resumeOnTouch);
+            document.removeEventListener('click', resumeOnTouch);
+          };
+          document.addEventListener('touchstart', resumeOnTouch, { passive: true, once: true });
+          document.addEventListener('click', resumeOnTouch, { passive: true, once: true });
+        });
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error("[AetherFin] Audio error:", e);
+    }
   }
 
   /* =========================================================================
@@ -467,13 +475,11 @@
     const hash = (window.location.hash || '').toLowerCase();
     const href = (window.location.href || '').toLowerCase();
 
-    // Explicitly non-detail pages
     if (hash.includes('home') || hash.includes('movies') || hash.includes('tv') || 
         hash.includes('search') || hash === '#/' || hash === '' || hash === '#!/home') {
       return false;
     }
 
-    // Must be an actual details route
     return hash.includes('details') || href.includes('details') || hash.includes('item?id=');
   }
 
@@ -490,7 +496,7 @@
 
   // Intercept taps & clicks
   function onCardClicked(target) {
-    const card = target.closest('.card, .cardBox, .listItem, a[data-itemid]');
+    const card = target.closest('.card, .cardBox, .listItem, a[data-itemid], [data-id]');
     if (card) {
       const cardContainer = card.closest('.card') || card;
       const title = extractCardTitle(cardContainer);
@@ -498,7 +504,7 @@
       if (theme) {
         isNavigatingToDetail = true;
         playTheme(theme, 0.24);
-        setTimeout(() => { isNavigatingToDetail = false; }, 3000);
+        setTimeout(() => { isNavigatingToDetail = false; }, 3500);
       }
     }
 
@@ -599,8 +605,90 @@
   }
 
   /* =========================================================================
-     6. FLOATING AUDIO PILL (BOTTOM-RIGHT)
+     6. FLOATING UI (RESPONSIVE FOR MOBILE BOTTOM BARS & DESKTOP)
      ========================================================================= */
+  const uiStyles = document.createElement('style');
+  uiStyles.textContent = `
+    #aetherfin-floating-theme-btn {
+      position: fixed;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+      left: 16px;
+      z-index: 999998;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(24, 24, 27, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      padding: 8px 14px;
+      border-radius: 9999px;
+      color: #f4f4f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+    }
+
+    #aetherfin-audio-pill {
+      position: fixed;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+      right: 16px;
+      z-index: 999998;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: rgba(24, 24, 27, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      padding: 8px 14px;
+      border-radius: 9999px;
+      color: #f4f4f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    @media (min-width: 769px) {
+      #aetherfin-floating-theme-btn {
+        bottom: 24px;
+        left: 20px;
+      }
+      #aetherfin-audio-pill {
+        bottom: 24px;
+        right: 20px;
+      }
+    }
+
+    #aetherfin-audio-pill .aether-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 12px;
+    }
+    #aetherfin-audio-pill .aether-bars span {
+      width: 2.5px;
+      background: #e50914;
+      border-radius: 2px;
+      animation: aetherBar 0.8s ease-in-out infinite alternate;
+    }
+    #aetherfin-audio-pill .aether-bars span:nth-child(1) { height: 6px; animation-delay: 0.1s; }
+    #aetherfin-audio-pill .aether-bars span:nth-child(2) { height: 12px; animation-delay: 0.3s; }
+    #aetherfin-audio-pill .aether-bars span:nth-child(3) { height: 8px; animation-delay: 0.2s; }
+    @keyframes aetherBar {
+      0% { height: 3px; }
+      100% { height: 12px; }
+    }
+  `;
+  document.head.appendChild(uiStyles);
+
   let pillElem = null;
   function updateFloatingPill(title) {
     if (!pillElem) {
@@ -613,52 +701,6 @@
           <span></span><span></span><span></span>
         </span>
       `;
-      pillElem.style.cssText = `
-        position: fixed;
-        bottom: 24px;
-        right: 20px;
-        z-index: 999998;
-        display: none;
-        align-items: center;
-        gap: 8px;
-        background: rgba(24, 24, 27, 0.9);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-        padding: 8px 14px;
-        border-radius: 9999px;
-        color: #f4f4f5;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        user-select: none;
-      `;
-
-      const style = document.createElement('style');
-      style.textContent = `
-        #aetherfin-audio-pill .aether-bars {
-          display: flex;
-          align-items: flex-end;
-          gap: 2px;
-          height: 12px;
-        }
-        #aetherfin-audio-pill .aether-bars span {
-          width: 2.5px;
-          background: #e50914;
-          border-radius: 2px;
-          animation: aetherBar 0.8s ease-in-out infinite alternate;
-        }
-        #aetherfin-audio-pill .aether-bars span:nth-child(1) { height: 6px; animation-delay: 0.1s; }
-        #aetherfin-audio-pill .aether-bars span:nth-child(2) { height: 12px; animation-delay: 0.3s; }
-        #aetherfin-audio-pill .aether-bars span:nth-child(3) { height: 8px; animation-delay: 0.2s; }
-        @keyframes aetherBar {
-          0% { height: 3px; }
-          100% { height: 12px; }
-        }
-      `;
-      document.head.appendChild(style);
 
       pillElem.addEventListener('click', () => {
         isMuted = !isMuted;
