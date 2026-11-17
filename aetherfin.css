@@ -1,46 +1,18 @@
 ﻿/**
- * AetherFin — Next-Gen Jellyfin Suite
- * Visual Engines: NeutralFin (KartoffelChipss) & Ultrachromic (CTalvio) with In-App Switcher
- * Audio Engine: AetherFin FX (Continuous Detail Score, Mobile Touch & Full Library Themes)
+ * AetherFin — Zombie Theme & Local Audio Engine for Jellyfin 12
+ * Visual Theme: Zombie Revived (MakD/zombie-release) - AMOLED Black & Minimalist UI
+ * Audio Engine: AetherFin FX (Local Server Theme Audio & Continuous Detail Score)
  * Author: 5H45H1K1R4N
  * Repository: https://github.com/5H45H1K1R4N/aetherfin-theme
  */
 
 /* =========================================================================
-   1. DEFAULT THEME: NeutralFin (Sleek Black & Neutral Grey + Lucide Icons)
+   1. PRIMARY THEME: Zombie Revived for Jellyfin 12 (MakD/zombie-release)
    ========================================================================= */
-@import url('https://cdn.jsdelivr.net/gh/KartoffelChipss/NeutralFin@latest/theme/neutralfin-minified.css');
-@import url('https://cdn.jsdelivr.net/gh/KartoffelChipss/Jellyfin-Lucide@main/theme/jellyfin-lucide.css');
+@import url("https://cdn.jsdelivr.net/gh/MakD/zombie-release@latest/zombie_revived.css");
 
 /* =========================================================================
-   2. TACTILE CARD ELEVATION & SPRING PHYSICS
-   ========================================================================= */
-.card {
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), 
-              box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), 
-              border-color 0.28s ease !important;
-  border-radius: var(--largeRadius, 12px) !important;
-}
-
-.card:hover,
-.card:focus-visible {
-  transform: translateY(-5px) scale(1.028) !important;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), 0 0 20px rgba(255, 255, 255, 0.08) !important;
-  border-color: rgba(255, 255, 255, 0.25) !important;
-  z-index: 10 !important;
-}
-
-.cardImageContainer {
-  border-radius: var(--largeRadius, 12px) !important;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-.card:hover .cardImageContainer {
-  transform: scale(1.015) !important;
-}
-
-/* =========================================================================
-   3. CUSTOM MOVIES & TV SHOWS LIBRARY BANNERS
+   2. CUSTOM MOVIES & TV SHOWS LIBRARY BANNERS
    ========================================================================= */
 [data-id="f137a2dd21bbc1b99aa5c0f6bf02a805"] .cardImageContainer,
 [data-id="f137a2dd21bbc1b99aa5c0f6bf02a805"] .cardScalable {
@@ -61,12 +33,12 @@
 [data-id="a656b907eb3a73532e40e44b968d0225"] .cardImageContainer img { opacity: 0 !important; }
 
 /* =========================================================================
-   4. SLEEK FLOATING THEME AUDIO PILL & THEME BUTTON
+   3. SLEEK FLOATING THEME AUDIO PILL
    ========================================================================= */
 #aetherfin-audio-pill {
-  background: rgba(19, 19, 19, 0.88) !important;
+  background: rgba(18, 18, 18, 0.92) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 12px rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), 0 0 12px rgba(255, 255, 255, 0.05) !important;
 }
