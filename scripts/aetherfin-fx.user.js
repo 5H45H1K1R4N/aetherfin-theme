@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         AetherFin Suite — Universal Sound FX & Local Theme Music Engine
 // @namespace    https://jellyfin.org/
-// @version      19.0.0
-// @description  Upgraded tactile UI sound effects (higher volume, modern pop chime hover, mechanical clicks), cinematic Hero Media Bar integration, and local server theme song playback engine across Web, Phone & TV.
+// @version      19.1.0
+// @description  Restored full authentic movie theme song database (34 tracks including Bāhubali) with multi-platform CDN streaming, tactile sound FX & celebration card.
 // @author       5H45H1K1R4N
 // @match        *://*/*
 // @grant        none
@@ -15,7 +15,7 @@
   if (window.__AETHERFIN_V19_LOADED__) return;
   window.__AETHERFIN_V19_LOADED__ = true;
 
-  console.log('%c[AetherFin FX v19]%c Movie Finished Achievement Suite Active', 
+  console.log('%c[AetherFin FX v19.1]%c 34 Authentic Theme Tracks (Including Bāhubali) Active', 
               'color: #00ac6f; font-weight: bold; font-size: 14px;', 'color: #ffffff; font-weight: bold;');
 
   const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
@@ -221,8 +221,49 @@
   }, { passive: true });
 
   /* =========================================================================
-     3. LOCAL SERVER THEME SONG DATABASE (Direct Local /Audio Stream)
+     3. HIGH-SPEED CDN & LOCAL THEME SONG ENGINE (All 34 Movies & Series)
      ========================================================================= */
+  const CDN_BASE = "https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/audio/themes";
+
+  const THEME_DATABASE = [
+    { keys: ["bahubali", "baahubali", "the beginning", "the epic"], file: "bahubali.mp3", title: "Bāhubali" },
+    { keys: ["interstellar"], file: "interstellar.mp3", title: "Interstellar" },
+    { keys: ["3 idiots", "three idiots"], file: "3-idiots.mp3", title: "3 Idiots" },
+    { keys: ["toxic"], file: "toxic.mp3", title: "Toxic" },
+    { keys: ["stranger things"], file: "stranger-things.mp3", title: "Stranger Things" },
+    { keys: ["dhoni", "ms dhoni", "m.s. dhoni", "untold story"], file: "ms-dhoni.mp3", title: "M.S. Dhoni: The Untold Story" },
+    { keys: ["tokyo drift", "fast and the furious tokyo drift", "fast and furious tokyo drift"], file: "tokyo-drift.mp3", title: "Tokyo Drift" },
+    { keys: ["phata poster", "nikhla hero", "agal bagal"], file: "phata-poster.mp3", title: "Phata Poster Nikhla Hero" },
+    { keys: ["iron man 2"], file: "iron-man.mp3", title: "Iron Man 2" },
+    { keys: ["iron man 3"], file: "iron-man.mp3", title: "Iron Man 3" },
+    { keys: ["iron man", "ironman"], file: "iron-man.mp3", title: "Iron Man" },
+    { keys: ["avengers", "the avengers"], file: "avengers.mp3", title: "The Avengers" },
+    { keys: ["doraemon", "undersea devil"], file: "doraemon.mp3", title: "Doraemon" },
+    { keys: ["jailer"], file: "jailer-2.mp3", title: "Jailer 2" },
+    { keys: ["premada oorali", "premada"], file: "premada-oorali.mp3", title: "Premada Oorali" },
+    { keys: ["your name", "kimi no na wa"], file: "your-name.mp3", title: "Your Name." },
+    { keys: ["hanuman ansh", "hanuman"], file: "hanuman-ansh.mp3", title: "Hanuman Ansh" },
+    { keys: ["spider-man", "spiderman", "brand new day"], file: "spider-man.mp3", title: "Spider-Man" },
+    { keys: ["breaking bad"], file: "breaking-bad.mp3", title: "Breaking Bad" },
+    { keys: ["inception"], file: "inception.mp3", title: "Inception" },
+    { keys: ["kalki", "kalki 2898", "bhairava"], file: "kalki.mp3", title: "Kalki 2898-AD" },
+    { keys: ["slam dunk", "the first slam dunk"], file: "slam-dunk.mp3", title: "The First Slam Dunk" },
+    { keys: ["from series", "show from", "series from"], file: "from.mp3", title: "FROM", isExactFrom: true },
+    { keys: ["jai ho"], file: "jai-ho.mp3", title: "Jai Ho" },
+    { keys: ["alice in borderland", "borderland"], file: "alice-in-borderland.mp3", title: "Alice in Borderland" },
+    { keys: ["grave of the fireflies", "fireflies"], file: "grave-of-fireflies.mp3", title: "Grave of the Fireflies" },
+    { keys: ["princess kaguya", "kaguya"], file: "princess-kaguya.mp3", title: "The Tale of The Princess Kaguya" },
+    { keys: ["final destination"], file: "final-destination.mp3", title: "Final Destination 5" },
+    { keys: ["googly"], file: "googly.mp3", title: "Googly" },
+    { keys: ["bridge to terabithia", "terabithia"], file: "bridge-to-terabithia.mp3", title: "Bridge to Terabithia" },
+    { keys: ["bhooth bangla", "bhoot bangla"], file: "bhooth-bangla.mp3", title: "Bhooth Bangla" },
+    { keys: ["i ve always liked you", "ive always liked you", "always liked you"], file: "i-ve-always-liked-you.mp3", title: "I've Always Liked You" },
+    { keys: ["ikka"], file: "ikka.mp3", title: "Ikka" },
+    { keys: ["ramayana"], file: "ramayana.mp3", title: "Ramayana" },
+    { keys: ["udta teer"], file: "udta-teer.mp3", title: "Udta Teer" },
+    { keys: ["visionquest", "vision quest"], file: "vision-quest.mp3", title: "VisionQuest" }
+  ];
+
   const SERVER_THEME_MAP = [
     { keys: ["3 idiots", "three idiots"], streamUrl: "/Audio/6ba6543f2cbe37cce0d0af6fe3908bab/stream.mp3", title: "3 Idiots" },
     { keys: ["alice in borderland", "borderland"], streamUrl: "/Audio/6b76cd76c93918931e119b56e0e3faf1/stream.mp3", title: "Alice in Borderland" },
@@ -298,7 +339,13 @@
 
   function normalize(str) {
     if (!str) return '';
-    return str.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+    return str
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   function findThemeForText(text) {
@@ -307,9 +354,29 @@
     if (!norm) return null;
 
     if (norm === "from" || norm.startsWith("from ") || norm.endsWith(" from")) {
-      return { title: "FROM", url: "/Audio/49a9933e90dc941f2cc2efc092f6b79d/stream.mp3" };
+      return { title: "FROM", url: `${CDN_BASE}/from.mp3`, serverUrl: "/Audio/49a9933e90dc941f2cc2efc092f6b79d/stream.mp3" };
     }
 
+    // 1. Check complete 34-track THEME_DATABASE (Guaranteed CDN playback)
+    for (const item of THEME_DATABASE) {
+      if (item.isExactFrom) continue;
+      for (const k of item.keys) {
+        const normKey = normalize(k);
+        if (norm.includes(normKey)) {
+          let serverFallback = null;
+          const sMatch = SERVER_THEME_MAP.find(s => s.keys.some(sk => normalize(sk) === normKey));
+          if (sMatch) serverFallback = sMatch.streamUrl;
+
+          return {
+            title: item.title,
+            url: `${CDN_BASE}/${item.file}`,
+            serverUrl: serverFallback
+          };
+        }
+      }
+    }
+
+    // 2. Local server audio map check
     for (const item of SERVER_THEME_MAP) {
       if (item.isExactFrom) continue;
       for (const k of item.keys) {
@@ -322,6 +389,7 @@
         }
       }
     }
+
     return null;
   }
 
@@ -371,6 +439,15 @@
       globalAudio.src = theme.url;
       globalAudio.loop = true;
       globalAudio.volume = 0.05;
+
+      // Graceful fallback to server if CDN network stalls
+      globalAudio.onerror = () => {
+        if (activeTheme && activeTheme.serverUrl && globalAudio.src !== activeTheme.serverUrl) {
+          console.log("[AetherFin] Primary audio failed, attempting local server stream:", activeTheme.serverUrl);
+          globalAudio.src = activeTheme.serverUrl;
+          globalAudio.play().catch(() => {});
+        }
+      };
 
       const playPromise = globalAudio.play();
       if (playPromise !== undefined) {
