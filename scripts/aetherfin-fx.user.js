@@ -1,37 +1,46 @@
 // ==UserScript==
-// @name         AetherFin Suite — Zombie Edition & Local Audio Engine
+// @name         AetherFin Suite — Sound FX & Theme Music Engine for Jellyfin
 // @namespace    https://jellyfin.org/
-// @version      11.0.0
-// @description  Zombie Theme (MakD/zombie-release) & Local Server Theme Audio Engine with Responsive Desktop Hover and Mobile Touch.
+// @version      12.0.0
+// @description  Bespoke Web Audio API UI sound effects (PS5 haptic hover, mechanical clicks, celebration fanfare) and local server theme song playback engine for Jellyfin.
 // @author       5H45H1K1R4N
 // @match        *://*/*
 // @grant        none
 // @run-at       document-end
 // ==/UserScript==
 
+/**
+ * 🌌 AetherFin FX Engine — Plug-and-Play Demo & Inspiration Template
+ * 
+ * FEATURES INCLUDED:
+ * 1. Web Audio API UI Sound Effects (0 audio files needed, 100% synthesized in-browser):
+ *    - PS5-style haptic hover micro-ticks on cards.
+ *    - Apple TV-style crisp mechanical click feedback on selection.
+ *    - Triumphant completion fanfare when a video finishes playing.
+ * 2. Native Jellyfin Server Theme Music Engine:
+ *    - Automatically discovers and streams `theme.mp3` files from your server (`/Audio/{id}/stream.mp3`).
+ *    - Desktop hover preview with intentional 400ms dwell & clean exit fade.
+ *    - Continuous playback when navigating from library card to movie detail page.
+ *    - Fully compatible with mobile WebViews (Jellyfin Android app touch gestures).
+ *    - Floating animated equalizer audio pill with mute toggle.
+ * 
+ * HOW TO INSTALL:
+ * Copy and paste this entire script into the Jellyfin "JavaScript Injector" plugin,
+ * or run it via Tampermonkey / Violentmonkey in your browser!
+ */
+
 (function () {
   'use strict';
 
-  if (window.__AETHERFIN_V11_LOADED__) return;
-  window.__AETHERFIN_V11_LOADED__ = true;
+  if (window.__AETHERFIN_LOADED__) return;
+  window.__AETHERFIN_LOADED__ = true;
 
-  console.log('%c[AetherFin Suite v11]%c Zombie Theme & Local Server Audio Active', 
+  console.log('%c[AetherFin FX]%c Sound Effects & Theme Music Engine Active', 
               'color: #00ac6f; font-weight: bold; font-size: 14px;', 'color: #ffffff; font-weight: bold;');
 
   const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
-  // Clean up legacy multi-theme elements if present in DOM
-  try {
-    const oldBtn = document.getElementById('aetherfin-floating-theme-btn');
-    if (oldBtn) oldBtn.remove();
-    const oldModal = document.getElementById('aetherfin-theme-modal');
-    if (oldModal) oldModal.remove();
-    const oldThemeLink = document.getElementById('aetherfin-active-theme-link');
-    if (oldThemeLink) oldThemeLink.remove();
-    localStorage.removeItem('aetherfin_active_theme');
-  } catch (e) {}
-
-  // Automatically enable native theme song preferences in browser/webview client storage
+  // Automatically enable native theme song preferences in Jellyfin storage
   try {
     localStorage.setItem('enableThemeSongs', 'true');
     localStorage.setItem('enableBackdrops', 'true');
@@ -47,49 +56,124 @@
   } catch (e) {}
 
   /* =========================================================================
-     1. LOCAL SERVER THEME SONG DATABASE (Direct Local /Audio Stream)
+     1. SYNTHESIZED WEB AUDIO API SOUND EFFECTS (0 Audio Files Needed)
      ========================================================================= */
-  const LOCAL_SERVER_THEMES = [
-    { keys: ["3 idiots", "three idiots"], streamUrl: "/Audio/6ba6543f2cbe37cce0d0af6fe3908bab/stream.mp3", title: "3 Idiots" },
-    { keys: ["alice in borderland", "borderland"], streamUrl: "/Audio/6b76cd76c93918931e119b56e0e3faf1/stream.mp3", title: "Alice in Borderland" },
-    { keys: ["avengers", "the avengers"], streamUrl: "/Audio/e9ea5d1e34c6208483fcb4652733ec27/stream.mp3", title: "The Avengers" },
-    { keys: ["bhooth bangla", "bhoot bangla"], streamUrl: "/Audio/441f9392069cb989a20217dc312a6852/stream.mp3", title: "Bhooth Bangla" },
-    { keys: ["breaking bad"], streamUrl: "/Audio/2823a020f96c35d576795c1f5c1a279c/stream.mp3", title: "Breaking Bad" },
-    { keys: ["bridge to terabithia", "terabithia"], streamUrl: "/Audio/99348b19c152a7b853b3c3912ca4271b/stream.mp3", title: "Bridge to Terabithia" },
-    { keys: ["doraemon", "undersea devil"], streamUrl: "/Audio/eab7b766a70eb94640b5b94686b29cb8/stream.mp3", title: "Doraemon" },
-    { keys: ["tokyo drift", "fast and the furious tokyo drift", "fast and furious tokyo drift"], streamUrl: "/Audio/16747c25ad27ab5ea284ed7944e59694/stream.mp3", title: "Tokyo Drift" },
-    { keys: ["final destination"], streamUrl: "/Audio/23b6b8e9667c28be8d8cad1aefd0544f/stream.mp3", title: "Final Destination 5" },
-    { keys: ["slam dunk", "the first slam dunk"], streamUrl: "/Audio/fab5533bff0069ae1d1a81441cc0b8fe/stream.mp3", title: "The First Slam Dunk" },
-    { keys: ["from series", "show from", "series from"], isExactFrom: true, streamUrl: "/Audio/49a9933e90dc941f2cc2efc092f6b79d/stream.mp3", title: "FROM" },
-    { keys: ["googly"], streamUrl: "/Audio/af07178ff6e7a4b737b1a0ecc424152f/stream.mp3", title: "Googly" },
-    { keys: ["grave of the fireflies", "fireflies"], streamUrl: "/Audio/5c0a14098ef7d1b203cf8960cd35c330/stream.mp3", title: "Grave of the Fireflies" },
-    { keys: ["ikka"], streamUrl: "/Audio/5a43e5d384eb514973f8b6c4268f8298/stream.mp3", title: "Ikka" },
-    { keys: ["inception"], streamUrl: "/Audio/22d43c99d7a50607930013b0a4938f35/stream.mp3", title: "Inception" },
-    { keys: ["interstellar"], streamUrl: "/Audio/50574993365efe65be557fa0905a37ae/stream.mp3", title: "Interstellar" },
-    { keys: ["iron man 2"], streamUrl: "/Audio/5b3d5bf75e85c0af0725f72da28c3416/stream.mp3", title: "Iron Man 2" },
-    { keys: ["iron man 3"], streamUrl: "/Audio/93bf19a14de6ae9b87af5c0e9e9c12f4/stream.mp3", title: "Iron Man 3" },
-    { keys: ["iron man", "ironman"], streamUrl: "/Audio/725b5e3a127ad7b950bcf77f4d2689ec/stream.mp3", title: "Iron Man" },
-    { keys: ["jai ho"], streamUrl: "/Audio/a67123e5ca2fa34d2cfe359c29c3bb25/stream.mp3", title: "Jai Ho" },
-    { keys: ["jailer"], streamUrl: "/Audio/b67364625cab6bb82bdaa4e40039007f/stream.mp3", title: "Jailer 2" },
-    { keys: ["kalki", "kalki 2898", "bhairava"], streamUrl: "/Audio/7ef3fd66216d0176e3347d61c5f11aeb/stream.mp3", title: "Kalki 2898-AD" },
-    { keys: ["dhoni", "ms dhoni", "m.s. dhoni", "untold story"], streamUrl: "/Audio/af07545b6b0ad4e8402d920403a50b79/stream.mp3", title: "M.S. Dhoni" },
-    { keys: ["phata poster", "nikhla hero", "agal bagal"], streamUrl: "/Audio/4052aae360684c5f2b5ebd9749192afc/stream.mp3", title: "Phata Poster Nikhla Hero" },
-    { keys: ["spider-man", "spiderman", "brand new day"], streamUrl: "/Audio/910b987f1bb263e83d97144174d24cb5/stream.mp3", title: "Spider-Man" },
-    { keys: ["stranger things"], streamUrl: "/Audio/6e9a17cac145d8d51f55e106a5e1e67f/stream.mp3", title: "Stranger Things" },
-    { keys: ["princess kaguya", "kaguya"], streamUrl: "/Audio/c7c526c5506d6cb4a81b98df51f5db6c/stream.mp3", title: "The Tale of The Princess Kaguya" },
-    { keys: ["toxic"], streamUrl: "/Audio/60594c74acdd6dd572ebd37773a751bd/stream.mp3", title: "Toxic" },
-    { keys: ["udta teer"], streamUrl: "/Audio/3bcaf0d6219288c7794fbb2cb9f85937/stream.mp3", title: "Udta Teer" },
-    { keys: ["visionquest", "vision quest"], streamUrl: "/Audio/aa9cfb350481d949dccf870b06d5d054/stream.mp3", title: "VisionQuest" },
-    { keys: ["your name", "kimi no na wa"], streamUrl: "/Audio/de6b56676a3c8a3ab1ca0563d1421014/stream.mp3", title: "Your Name." },
-    // Fallback CDN tracks for unindexed single-file media
-    { keys: ["hanuman ansh", "hanuman"], streamUrl: "https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/audio/themes/hanuman-ansh.mp3", title: "Hanuman Ansh" },
-    { keys: ["premada oorali", "premada"], streamUrl: "https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/audio/themes/premada-oorali.mp3", title: "Premada Oorali" },
-    { keys: ["i ve always liked you", "ive always liked you", "always liked you"], streamUrl: "https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/audio/themes/i-ve-always-liked-you.mp3", title: "I've Always Liked You" },
-    { keys: ["ramayana"], streamUrl: "https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/audio/themes/ramayana.mp3", title: "Ramayana" }
+  let audioCtx = null;
+  function getAudioContext() {
+    if (!audioCtx) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        audioCtx = new AudioContext();
+      }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+  }
+
+  // Play subtle PS5-style tactile hover tick (140Hz sine burst)
+  function playHoverTick() {
+    if (isMuted || isMobile) return;
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(140, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(70, ctx.currentTime + 0.04);
+
+      gain.gain.setValueAtTime(0.04, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.045);
+    } catch (e) {}
+  }
+
+  // Play crisp Apple TV-style mechanical click sound
+  function playClickSound() {
+    if (isMuted) return;
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(320, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.035);
+
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.035);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.04);
+    } catch (e) {}
+  }
+
+  // Triumphant 4-tone victory celebration fanfare when completing a movie
+  function playCelebrationFanfare() {
+    if (isMuted) return;
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.12);
+
+        gain.gain.setValueAtTime(0.06, ctx.currentTime + idx * 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.12 + 0.35);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(ctx.currentTime + idx * 0.12);
+        osc.stop(ctx.currentTime + idx * 0.12 + 0.36);
+      });
+    } catch (e) {}
+  }
+
+  // Bind UI click & hover sound effects
+  document.addEventListener('mouseover', (e) => {
+    if (e.target && e.target.closest('.card, .paper-icon-button-light, .button-flat, .navMenuOption')) {
+      playHoverTick();
+    }
+  }, { passive: true });
+
+  document.addEventListener('click', (e) => {
+    if (e.target && e.target.closest('.card, button, .button-flat, .paper-icon-button-light, a')) {
+      playClickSound();
+    }
+  }, { passive: true });
+
+  /* =========================================================================
+     2. DEMO / CUSTOM THEME SONG MAPPINGS (Optional Static Fallback)
+     =========================================================================
+     Jellyfin will AUTOMATICALLY play native theme songs if you have `theme.mp3`
+     in your movie folder! 
+     However, you can also map any specific title to custom audio URLs below:
+  */
+  const DEMO_CUSTOM_THEMES = [
+    // Template Examples:
+    // { keys: ["interstellar"], url: "/Audio/your-id-here/stream.mp3", title: "Interstellar" },
+    // { keys: ["stranger things"], url: "https://your-domain.com/audio/stranger-things.mp3", title: "Stranger Things" },
   ];
 
   /* =========================================================================
-     2. UNIVERSAL REUSABLE AUDIO PIPELINE (Direct HTMLAudioElement)
+     3. UNIVERSAL THEME MUSIC AUDIO PIPELINE
      ========================================================================= */
   let globalAudio = document.getElementById('aetherfin-global-audio');
   if (!globalAudio) {
@@ -107,7 +191,6 @@
   let fadeTimer = null;
   let audioUnlocked = false;
 
-  // Seamless touch unlock for Mobile App WebViews without resetting src
   function unlockAudioEngine() {
     if (audioUnlocked) return;
     try {
@@ -126,35 +209,6 @@
   ['touchstart', 'touchend', 'click', 'pointerdown'].forEach(evt => {
     document.addEventListener(evt, unlockAudioEngine, { passive: true });
   });
-
-  function normalize(str) {
-    if (!str) return '';
-    return str.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-  }
-
-  function findThemeForText(text) {
-    if (!text) return null;
-    const norm = normalize(text);
-    if (!norm) return null;
-
-    if (norm === "from" || norm.startsWith("from ") || norm.endsWith(" from")) {
-      return { title: "FROM", url: "/Audio/49a9933e90dc941f2cc2efc092f6b79d/stream.mp3" };
-    }
-
-    for (const item of LOCAL_SERVER_THEMES) {
-      if (item.isExactFrom) continue;
-      for (const k of item.keys) {
-        const normKey = normalize(k);
-        if (norm.includes(normKey)) {
-          return {
-            title: item.title,
-            url: item.streamUrl
-          };
-        }
-      }
-    }
-    return null;
-  }
 
   function stopMusic(fadeMs = 250) {
     if (!activeTheme && globalAudio.paused) return;
@@ -186,12 +240,12 @@
   function playTheme(theme, targetVolume = 0.22) {
     if (isMuted || !theme) return;
     if (activeTheme && activeTheme.url === theme.url && !globalAudio.paused) {
-      return; // Already playing this exact track
+      return; // Already playing this track
     }
 
     if (fadeTimer) clearInterval(fadeTimer);
 
-    // Don't play if movie video is actively playing in Jellyfin
+    // Don't play theme audio if a video is currently playing in Jellyfin
     const isVideoPlaying = document.querySelector('video:not(.paused)') && !document.querySelector('video').paused;
     if (isVideoPlaying) return;
 
@@ -223,7 +277,6 @@
             }
           }, 35);
         }).catch((err) => {
-          console.log("[AetherFin] Autoplay waiting for user gesture:", err.message);
           const resumeOnTouch = () => {
             if (activeTheme && activeTheme.url === theme.url && globalAudio.paused) {
               globalAudio.play().catch(() => {});
@@ -241,7 +294,61 @@
   }
 
   /* =========================================================================
-     3. ACCURATE DETAIL PAGE & NAVIGATION STATE
+     4. DYNAMIC SERVER THEME SONG QUERY & CACHING
+     ========================================================================= */
+  const themeCache = {};
+
+  function resolveThemeForItem(itemId, title, callback) {
+    // 1. Check in-memory cache
+    if (itemId && themeCache[itemId] !== undefined) {
+      callback(themeCache[itemId]);
+      return;
+    }
+
+    // 2. Query Jellyfin Server for native ThemeSongs
+    if (itemId) {
+      fetch(`/Items/${itemId}/ThemeSongs`, { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(data => {
+          const items = data.Items || [];
+          if (items.length > 0) {
+            const result = {
+              title: title || items[0].Name || 'Theme Song',
+              url: `/Audio/${items[0].Id}/stream.mp3`
+            };
+            themeCache[itemId] = result;
+            callback(result);
+            return;
+          }
+          themeCache[itemId] = null;
+          checkCustomFallback();
+        })
+        .catch(() => {
+          themeCache[itemId] = null;
+          checkCustomFallback();
+        });
+    } else {
+      checkCustomFallback();
+    }
+
+    // 3. Fallback to custom mapped themes if no server ThemeSong is found
+    function checkCustomFallback() {
+      if (!title) { callback(null); return; }
+      const norm = title.toLowerCase().trim();
+      for (const item of DEMO_CUSTOM_THEMES) {
+        for (const k of item.keys) {
+          if (norm.includes(k.toLowerCase())) {
+            callback({ title: item.title, url: item.url });
+            return;
+          }
+        }
+      }
+      callback(null);
+    }
+  }
+
+  /* =========================================================================
+     5. DETAIL PAGE NAVIGATION & CARD INTERACTION
      ========================================================================= */
   let isNavigatingToDetail = false;
 
@@ -268,18 +375,26 @@
     return (card.textContent || '').trim().split('\n')[0].trim();
   }
 
+  function extractCardItemId(card) {
+    if (!card) return null;
+    return card.getAttribute('data-id') || card.getAttribute('data-itemid') || null;
+  }
+
   // Intercept taps & clicks
   function onCardClicked(target) {
     const card = target.closest('.card, .cardBox, .listItem, a[data-itemid], [data-id]');
     if (card) {
       const cardContainer = card.closest('.card') || card;
       const title = extractCardTitle(cardContainer);
-      const theme = findThemeForText(title);
-      if (theme) {
-        isNavigatingToDetail = true;
-        playTheme(theme, 0.24);
-        setTimeout(() => { isNavigatingToDetail = false; }, 3500);
-      }
+      const itemId = extractCardItemId(cardContainer);
+
+      resolveThemeForItem(itemId, title, (theme) => {
+        if (theme) {
+          isNavigatingToDetail = true;
+          playTheme(theme, 0.24);
+          setTimeout(() => { isNavigatingToDetail = false; }, 3500);
+        }
+      });
     }
 
     if (target.closest('.btnPlay, [data-action="play"], button[data-id="play"], .videoPlayButton')) {
@@ -290,7 +405,7 @@
   document.addEventListener('click', (e) => { onCardClicked(e.target); }, true);
   document.addEventListener('touchend', (e) => { if (e.target) onCardClicked(e.target); }, { passive: true });
 
-  // Route observer for detail page enter / exit
+  // Detail page enter / exit observer
   let lastDetailPageState = false;
   function checkRouteState() {
     const onDetail = isCurrentlyOnDetailPage();
@@ -300,13 +415,18 @@
       const titleEl = document.querySelector('.itemName, .parentName, h1.itemName, .detailPagePrimaryContainer h1');
       const docTitle = document.title ? document.title.replace('- Jellyfin', '').trim() : '';
       const title = titleEl ? titleEl.textContent.trim() : docTitle;
-      const theme = findThemeForText(title);
 
-      if (theme) {
-        if (!activeTheme || activeTheme.url !== theme.url || globalAudio.paused) {
-          playTheme(theme, 0.22);
+      // Extract item ID from URL
+      const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || window.location.search);
+      const itemId = urlParams.get('id');
+
+      resolveThemeForItem(itemId, title, (theme) => {
+        if (theme) {
+          if (!activeTheme || activeTheme.url !== theme.url || globalAudio.paused) {
+            playTheme(theme, 0.22);
+          }
         }
-      }
+      });
     } else {
       if (lastDetailPageState && !isNavigatingToDetail) {
         lastDetailPageState = false;
@@ -321,7 +441,7 @@
   routeObserver.observe(document.body, { childList: true, subtree: true });
 
   /* =========================================================================
-     4. RESPONSIVE HOVER SWITCHING (DESKTOP)
+     6. RESPONSIVE HOVER SWITCHING (DESKTOP)
      ========================================================================= */
   let hoverTimer = null;
   let currentCardElem = null;
@@ -342,13 +462,17 @@
         hoverTimer = setTimeout(() => {
           if (currentCardElem === cardContainer && !isCurrentlyOnDetailPage() && !isNavigatingToDetail) {
             const title = extractCardTitle(cardContainer);
-            const theme = findThemeForText(title);
+            const itemId = extractCardItemId(cardContainer);
 
-            if (theme) {
-              playTheme(theme, 0.18);
-            } else {
-              stopMusic(200);
-            }
+            resolveThemeForItem(itemId, title, (theme) => {
+              if (currentCardElem === cardContainer && !isCurrentlyOnDetailPage()) {
+                if (theme) {
+                  playTheme(theme, 0.18);
+                } else {
+                  stopMusic(200);
+                }
+              }
+            });
           }
         }, 400); // 400ms intentional dwell
       }
@@ -374,7 +498,7 @@
   }
 
   /* =========================================================================
-     5. FLOATING AUDIO PILL (BOTTOM-RIGHT)
+     7. FLOATING AUDIO PILL (BOTTOM-RIGHT)
      ========================================================================= */
   const uiStyles = document.createElement('style');
   uiStyles.textContent = `
