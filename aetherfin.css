@@ -1,110 +1,51 @@
 ﻿/**
- * AetherFin — Next-Gen Jellyfin 12 Theme Suite
+ * AetherFin — Next-Gen Jellyfin Suite
+ * Visual Engine: NeutralFin (KartoffelChipss) + Lucide Icons
+ * Audio Engine: AetherFin FX v5 (Continuous Detail Score, Mobile Touch & Full Library Themes)
  * Author: 5H45H1K1R4N
- * License: MIT
  * Repository: https://github.com/5H45H1K1R4N/aetherfin-theme
  */
 
-/* --- 1. Base v12 Engine --- */
-@import url(https://cdn.jsdelivr.net/gh/MakD/zombie-release@latest/zombie_revived.css);
-@import url(https://cdn.jsdelivr.net/gh/MakD/zombie-release@latest/mediabar/zombie-mediabar.css);
+/* =========================================================================
+   1. CORE THEME: NeutralFin (Sleek Black & Neutral Grey by KartoffelChipss)
+   ========================================================================= */
+@import url('https://cdn.jsdelivr.net/gh/KartoffelChipss/NeutralFin@latest/theme/neutralfin-minified.css');
 
-/* --- 2. Default Design Tokens (Cyber-OLED) --- */
-:root {
-  --af-bg-base: #060709;
-  --af-bg-surface: rgba(14, 16, 22, 0.78);
-  --af-accent-primary: #e50914;
-  --af-accent-glow: rgba(229, 9, 20, 0.35);
-  --af-glass-border: rgba(255, 255, 255, 0.08);
-  --af-card-radius: 12px;
-  --af-spring-easing: cubic-bezier(0.16, 1, 0.3, 1);
-}
+/* =========================================================================
+   2. MODERN ICONS: Jellyfin Lucide Icons (Clean Minimalist Vectors)
+   ========================================================================= */
+@import url('https://cdn.jsdelivr.net/gh/KartoffelChipss/Jellyfin-Lucide@main/theme/jellyfin-lucide.css');
 
-/* --- 3. Pure OLED Dark Canvas --- */
-html, body, .backgroundContainer {
-  background-color: var(--af-bg-base) !important;
-}
-
-/* --- 4. 3D Spring Physics Card Hover --- */
+/* =========================================================================
+   3. AETHERFIN TACTILE CARD ENHANCEMENTS
+   ========================================================================= */
 .card {
-  border-radius: var(--af-card-radius) !important;
-  overflow: hidden !important;
-  transition: transform 0.32s var(--af-spring-easing), 
-              box-shadow 0.32s var(--af-spring-easing),
-              border-color 0.32s ease !important;
-  border: 1px solid transparent !important;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), 
+              border-color 0.28s ease !important;
+  border-radius: var(--largeRadius, 12px) !important;
 }
 
-.card:hover {
-  transform: translateY(-8px) scale(1.035) !important;
-  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.88), 
-              0 0 25px var(--af-accent-glow) !important;
-  border-color: var(--af-accent-glow) !important;
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-5px) scale(1.028) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), 0 0 20px rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
   z-index: 10 !important;
 }
 
 .cardImageContainer {
-  border-radius: var(--af-card-radius) !important;
-  transition: transform 0.35s var(--af-spring-easing) !important;
+  border-radius: var(--largeRadius, 12px) !important;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .card:hover .cardImageContainer {
-  transform: scale(1.02) !important;
+  transform: scale(1.015) !important;
 }
 
-/* --- 5. Frosted Acrylic Glass Navigation --- */
-.skinHeader {
-  background: rgba(6, 7, 9, 0.72) !important;
-  backdrop-filter: blur(28px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
-  border-bottom: 1px solid var(--af-glass-border) !important;
-}
-
-.mainDrawer, .dialog, .paperList {
-  background: var(--af-bg-surface) !important;
-  backdrop-filter: blur(32px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
-  border: 1px solid var(--af-glass-border) !important;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9) !important;
-  border-radius: 20px !important;
-}
-
-/* --- 6. Glowing Progress Bars & Pill Badges --- */
-.countIndicator, .playedIndicator {
-  border-radius: 20px !important;
-  background: linear-gradient(135deg, var(--af-accent-primary), #b20710) !important;
-  color: #fff !important;
-  font-weight: 700 !important;
-  box-shadow: 0 4px 14px var(--af-accent-glow) !important;
-  padding: 0.22em 0.6em !important;
-  border: none !important;
-}
-
-.itemProgressBarForeground, .playbackProgress > div {
-  background: linear-gradient(90deg, var(--af-accent-primary), #ff3b30) !important;
-  border-radius: 6px !important;
-  box-shadow: 0 0 10px var(--af-accent-glow) !important;
-}
-
-/* --- 7. Minimalist Dark Rail Scrollbar --- */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--af-accent-primary);
-  box-shadow: 0 0 10px var(--af-accent-primary);
-}
-
-
-/* --- 8. Custom Movies & TV Shows Library Banners --- */
+/* =========================================================================
+   4. CUSTOM MOVIES & TV SHOWS LIBRARY BANNERS
+   ========================================================================= */
 [data-id="f137a2dd21bbc1b99aa5c0f6bf02a805"] .cardImageContainer,
 [data-id="f137a2dd21bbc1b99aa5c0f6bf02a805"] .cardScalable {
   background-image: url("https://raw.githubusercontent.com/DevilsDesigns/Devils-Designs-Custom-Jellyfin-Thumbnails/main/Library-Thumbail-Previews/Movies.png") !important;
@@ -122,3 +63,14 @@ html, body, .backgroundContainer {
   background-repeat: no-repeat !important;
 }
 [data-id="a656b907eb3a73532e40e44b968d0225"] .cardImageContainer img { opacity: 0 !important; }
+
+/* =========================================================================
+   5. SLEEK FLOATING THEME AUDIO PILL (NeutralFin Aesthetic)
+   ========================================================================= */
+#aetherfin-audio-pill {
+  background: rgba(19, 19, 19, 0.88) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 12px rgba(255, 255, 255, 0.05) !important;
+}
