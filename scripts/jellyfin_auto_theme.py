@@ -24,6 +24,19 @@ import argparse
 import urllib.request
 import urllib.parse
 import json
+import unicodedata
+import re
+
+def clean_movie_title(name):
+    """Normalize accents (e.g. Bāhubali -> Bahubali) and strip release tag clutter."""
+    if not name:
+        return ""
+    nfd = unicodedata.normalize('NFKD', name)
+    clean = ''.join(c for c in nfd if not unicodedata.combining(c))
+    clean = clean.replace('_', ' ')
+    clean = re.sub(r'(?i)\b(hindi|fan dubbed|dubbed|1080p|720p|hdtc|web-dl|x264|x265|s\d+e\d+)\b', ' ', clean)
+    clean = re.sub(r'\s+', ' ', clean).strip()
+    return clean
 
 try:
     import yt_dlp
