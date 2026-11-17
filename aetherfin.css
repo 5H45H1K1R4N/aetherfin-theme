@@ -1,8 +1,8 @@
 ﻿/**
  * AetherFin — Next-Gen Jellyfin 12 Theme Suite
- * Author: Antigravity / Open Community
+ * Author: 5H45H1K1R4N
  * License: MIT
- * Repository: https://github.com/aetherfin/aetherfin-theme
+ * Repository: https://github.com/5H45H1K1R4N/aetherfin-theme
  */
 
 /* --- 1. Base v12 Engine --- */
@@ -102,3 +102,4 @@ html, body, .backgroundContainer {
   background: var(--af-accent-primary);
   box-shadow: 0 0 10px var(--af-accent-primary);
 }
+

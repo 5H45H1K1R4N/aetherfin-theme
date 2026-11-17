@@ -16,7 +16,7 @@ In your Jellyfin dashboard:
 3. Paste the one-liner below and click **Save**:
 
 ```css
-@import url("https://cdn.jsdelivr.net/gh/<USERNAME>/aetherfin-theme@main/aetherfin.css");
+@import url("https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/aetherfin.css");
 ```
 
 ---
@@ -27,11 +27,11 @@ Stack any of these below the main import to customize your accent:
 
 | Scheme | Accent | One-Line Import |
 | :--- | :--- | :--- |
-| **Netflix (Default)** | 🔴 Crimson Red | `@import url("https://cdn.jsdelivr.net/gh/<USERNAME>/aetherfin-theme@main/color-schemes/netflix.css");` |
-| **Cyber Cyan** | 🌐 Neon Cyan | `@import url("https://cdn.jsdelivr.net/gh/<USERNAME>/aetherfin-theme@main/color-schemes/cyber-cyan.css");` |
-| **HBO Purple** | 🟣 Electric Violet | `@import url("https://cdn.jsdelivr.net/gh/<USERNAME>/aetherfin-theme@main/color-schemes/hbo-purple.css");` |
-| **Emerald** | 🟢 Spotify Emerald | `@import url("https://cdn.jsdelivr.net/gh/<USERNAME>/aetherfin-theme@main/color-schemes/emerald.css");` |
-| **AMOLED Pure** | ⚪ Minimal Monochrome | `@import url("https://cdn.jsdelivr.net/gh/<USERNAME>/aetherfin-theme@main/color-schemes/amoled-pure.css");` |
+| **Netflix (Default)** | 🔴 Crimson Red | `@import url("https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/color-schemes/netflix.css");` |
+| **Cyber Cyan** | 🌐 Neon Cyan | `@import url("https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/color-schemes/cyber-cyan.css");` |
+| **HBO Purple** | 🟣 Electric Violet | `@import url("https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/color-schemes/hbo-purple.css");` |
+| **Emerald** | 🟢 Spotify Emerald | `@import url("https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/color-schemes/emerald.css");` |
+| **AMOLED Pure** | ⚪ Minimal Monochrome | `@import url("https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/color-schemes/amoled-pure.css");` |
 
 ---
 
@@ -61,3 +61,4 @@ Install via **Tampermonkey / Violentmonkey** or inject into your client!
 
 ## 📜 License
 Released under the [MIT License](LICENSE).
+
