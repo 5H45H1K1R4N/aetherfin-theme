@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AetherFin Suite — Universal Sound FX & Local Theme Music Engine
 // @namespace    https://jellyfin.org/
-// @version      18.0.0
+// @version      19.0.0
 // @description  Upgraded tactile UI sound effects (higher volume, modern pop chime hover, mechanical clicks), cinematic Hero Media Bar integration, and local server theme song playback engine across Web, Phone & TV.
 // @author       5H45H1K1R4N
 // @match        *://*/*
@@ -12,10 +12,10 @@
 (function () {
   'use strict';
 
-  if (window.__AETHERFIN_V18_LOADED__) return;
-  window.__AETHERFIN_V18_LOADED__ = true;
+  if (window.__AETHERFIN_V19_LOADED__) return;
+  window.__AETHERFIN_V19_LOADED__ = true;
 
-  console.log('%c[AetherFin FX v18]%c Activity Page & Sound Suite Active', 
+  console.log('%c[AetherFin FX v19]%c Movie Finished Achievement Suite Active', 
               'color: #00ac6f; font-weight: bold; font-size: 14px;', 'color: #ffffff; font-weight: bold;');
 
   const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
@@ -36,6 +36,22 @@
       if (el) el.remove();
     });
     document.querySelectorAll('.aetherfin-header-fame-btn, .sectionFamilyActivity').forEach(el => el.remove());
+  } catch (e) {}
+  // Clean up legacy navigation tabs, pages, shelves, or floating modals
+  try {
+    const toRemove = [
+      'aetherfin-fame-btn',
+      'aetherfin-fame-modal',
+      'aether-celebration-toast',
+      'aether-confetti-canvas',
+      'aetherfin-nav-activity',
+      'aetherfin-activity-page'
+    ];
+    toRemove.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    });
+    document.querySelectorAll('.aetherfin-header-fame-btn, .sectionFamilyActivity, #aetherfin-nav-activity').forEach(el => el.remove());
   } catch (e) {}
   // Clean up legacy multi-theme elements if present in DOM
   try {
@@ -703,319 +719,152 @@
   }
 
   /* =========================================================================
-     9. DEDICATED FAMILY ACTIVITY PAGE & HEADER NAVIGATION TAB
+     9. "MOVIE FINISHED!" CELEBRATION & ACHIEVEMENT CARD (No Frames / No Tabs)
      ========================================================================= */
-  const JELLYFIN_SERVER_TOKEN = '2d2051fbff00417eb2526343d3e1450f';
 
-  const USER_DOT_COLORS = {
-    admin: '#10b981',   // Emerald
-    TV: '#38bdf8',      // Sky Blue
-    hacker: '#a855f7',  // Violet
-    prem: '#f59e0b'     // Amber
-  };
-
-  function formatRelativeTime(isoStr) {
-    if (!isoStr) return '';
+  // Elegant, luxury completion chime (Apple TV / PS5 trophy style)
+  function playCelebrationChime() {
+    if (isMuted) return;
     try {
-      const diffSec = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000);
-      if (diffSec < 60) return 'Just now';
-      const diffMin = Math.floor(diffSec / 60);
-      if (diffMin < 60) return `${diffMin}m ago`;
-      const diffHr = Math.floor(diffMin / 60);
-      if (diffHr < 24) return `${diffHr}h ago`;
-      const diffDays = Math.floor(diffHr / 24);
-      if (diffDays === 1) return 'Yesterday';
-      if (diffDays < 7) return `${diffDays}d ago`;
-      return new Date(isoStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const t = ctx.currentTime;
+
+      // Harmonic major chord chime (C5 + E5 + G5) with gentle attack and shimmering decay
+      const tones = [
+        { f: 523.25, start: 0.00, dur: 0.55, vol: 0.14 }, // C5
+        { f: 659.25, start: 0.04, dur: 0.60, vol: 0.12 }, // E5
+        { f: 783.99, start: 0.08, dur: 0.75, vol: 0.15 }, // G5
+        { f: 1046.50, start: 0.12, dur: 0.85, vol: 0.08 } // C6 shimmer
+      ];
+
+      tones.forEach(tone => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(tone.f, t + tone.start);
+
+        gain.gain.setValueAtTime(0.001, t + tone.start);
+        gain.gain.exponentialRampToValueAtTime(tone.vol, t + tone.start + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + tone.start + tone.dur);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t + tone.start);
+        osc.stop(t + tone.start + tone.dur + 0.05);
+      });
     } catch (e) {
-      return '';
+      console.warn('[AetherFin] Chime audio error:', e);
     }
   }
 
-  async function fetchAllFamilyActivity() {
-    const token = (window.ApiClient && window.ApiClient.accessToken && window.ApiClient.accessToken()) || JELLYFIN_SERVER_TOKEN;
-    const headers = {
-      'Authorization': `MediaBrowser Client="Jellyfin Web", Device="Browser", DeviceId="activitypage", Version="12.1.0", Token="${token}"`
-    };
+  function showAchievementCard(title, subtitle = 'Marked as completed') {
+    let card = document.getElementById('aether-achievement-card');
+    if (card) card.remove();
 
-    const resUsers = await fetch('/Users', { headers });
-    if (!resUsers.ok) throw new Error('Users API failed');
-    const users = await resUsers.json();
-
-    const feed = [];
-    for (const u of users) {
-      try {
-        const url = `/Users/${u.Id}/Items?IsPlayed=true&Recursive=true&IncludeItemTypes=Movie,Episode&SortBy=DatePlayed,SortName&SortOrder=Descending&Limit=25&Fields=Overview,PrimaryImageAspectRatio,ProductionYear`;
-        const resItems = await fetch(url, { headers });
-        if (resItems.ok) {
-          const data = await resItems.json();
-          if (data.Items) {
-            for (const item of data.Items) {
-              const playedDate = item.UserData && item.UserData.LastPlayedDate;
-              if (playedDate) {
-                feed.push({
-                  user: u.Name,
-                  userId: u.Id,
-                  itemId: item.Id,
-                  name: item.Name,
-                  type: item.Type,
-                  seriesName: item.SeriesName,
-                  seasonName: item.SeasonName,
-                  indexNumber: item.IndexNumber,
-                  parentIndexNumber: item.ParentIndexNumber,
-                  datePlayed: playedDate,
-                  seriesId: item.SeriesId,
-                  year: item.ProductionYear
-                });
-              }
-            }
-          }
-        }
-      } catch (err) {}
-    }
-
-    feed.sort((a, b) => new Date(b.datePlayed) - new Date(a.datePlayed));
-    return feed;
-  }
-
-  let activityPageEl = null;
-  let cachedActivityFeed = null;
-  let lastFeedFetchTime = 0;
-  let currentFilter = 'all';
-
-  function createActivityPage() {
-    if (activityPageEl && document.body.contains(activityPageEl)) {
-      return activityPageEl;
-    }
-
-    activityPageEl = document.createElement('div');
-    activityPageEl.id = 'aetherfin-activity-page';
-    activityPageEl.className = 'page libraryPage focuscontainer';
-    activityPageEl.innerHTML = `
-      <div class="activity-page-header">
-        <div class="activity-page-title-row">
-          <h1 class="activity-page-title">Family Watch Activity</h1>
-          <span class="activity-page-subtitle">Recent watch history across all household profiles</span>
-        </div>
-        <div class="activity-filter-bar" id="activity-filter-bar">
-          <button class="activity-filter-btn active" data-filter="all">All Activity</button>
-          <button class="activity-filter-btn" data-filter="Movie">Movies</button>
-          <button class="activity-filter-btn" data-filter="Episode">Shows</button>
-          <button class="activity-filter-btn" data-filter="admin">👤 admin</button>
-          <button class="activity-filter-btn" data-filter="TV">📺 TV</button>
-          <button class="activity-filter-btn" data-filter="hacker">⚡ hacker</button>
-          <button class="activity-filter-btn" data-filter="prem">⭐ prem</button>
-        </div>
+    card = document.createElement('div');
+    card.id = 'aether-achievement-card';
+    card.setAttribute('role', 'alert');
+    card.setAttribute('aria-live', 'assertive');
+    card.innerHTML = `
+      <div class="aether-achievement-icon-wrap">🎬</div>
+      <div class="aether-achievement-body">
+        <div class="aether-achievement-tag">Movie Finished!</div>
+        <div class="aether-achievement-title">${title || 'Feature Title'}</div>
+        <div class="aether-achievement-sub">${subtitle}</div>
       </div>
-      <div class="activity-grid" id="activity-grid">
-        <div style="color: rgba(255,255,255,0.4); font-size: 14px; padding: 24px; grid-column: 1/-1;">Loading activity...</div>
-      </div>
+      <button class="aether-achievement-dismiss" title="Dismiss">✕</button>
     `;
 
-    // Filter pill events
-    const filterBar = activityPageEl.querySelector('#activity-filter-bar');
-    filterBar.addEventListener('click', (e) => {
-      const btn = e.target.closest('.activity-filter-btn');
-      if (btn) {
-        filterBar.querySelectorAll('.activity-filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentFilter = btn.getAttribute('data-filter');
-        renderActivityGrid();
-      }
+    // Click to dismiss
+    card.addEventListener('click', () => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(-20px)';
+      setTimeout(() => { if (card.parentNode) card.remove(); }, 350);
     });
 
-    // Mount into DOM inside main container or body
-    const mainHost = document.querySelector('.mainAnimatedPages, #reactRoot');
-    if (mainHost) {
-      mainHost.appendChild(activityPageEl);
-    } else {
-      document.body.appendChild(activityPageEl);
-    }
+    document.body.appendChild(card);
 
-    return activityPageEl;
-  }
-
-  function renderActivityGrid() {
-    if (!activityPageEl || !cachedActivityFeed) return;
-    const grid = activityPageEl.querySelector('#activity-grid');
-    if (!grid) return;
-
-    let items = cachedActivityFeed;
-    if (currentFilter === 'Movie') {
-      items = items.filter(x => x.type === 'Movie');
-    } else if (currentFilter === 'Episode') {
-      items = items.filter(x => x.type === 'Episode');
-    } else if (currentFilter !== 'all') {
-      items = items.filter(x => x.user.toLowerCase() === currentFilter.toLowerCase());
-    }
-
-    if (items.length === 0) {
-      grid.innerHTML = `<div style="color: rgba(255,255,255,0.4); font-size: 14px; padding: 24px; grid-column: 1/-1;">No activity found for this filter.</div>`;
-      return;
-    }
-
-    grid.innerHTML = items.map(item => {
-      const posterId = item.seriesId || item.itemId;
-      const posterUrl = `/Items/${posterId}/Images/Primary?fillHeight=330&fillWidth=220&quality=85`;
-      const timeAgo = formatRelativeTime(item.datePlayed);
-      const dotColor = USER_DOT_COLORS[item.user] || '#00ac6f';
-      const isEpisode = item.type === 'Episode';
-      const mainTitle = item.seriesName ? item.seriesName : item.name;
-      const subTitle = item.seriesName ? (isEpisode && item.indexNumber ? `S${item.parentIndexNumber || 1}:E${item.indexNumber} - ${item.name}` : item.name) : (item.year ? `${item.year}` : 'Movie');
-
-      return `
-        <div class="card portraitCard activity-grid-card card-hoverable" tabindex="0" data-id="${item.itemId}">
-          <div class="cardBox visualCardBox">
-            <div class="cardScalable">
-              <img src="${posterUrl}" alt="${mainTitle}" loading="lazy" onerror="this.src='/web/touchicon144.39209dd2362c0db7c673.png';" />
-              <div class="activity-card-badge">
-                <span class="activity-user-dot" style="background: ${dotColor};"></span>
-                <span>${item.user}</span>
-                <span class="activity-card-time">• ${timeAgo}</span>
-              </div>
-            </div>
-            <div class="cardFooter">
-              <div class="cardText cardText-first" title="${mainTitle}">${mainTitle}</div>
-              <div class="cardText cardText-secondary" title="${subTitle}">${subTitle}</div>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    // Attach navigation clicks
-    grid.querySelectorAll('.activity-grid-card').forEach(card => {
-      const id = card.getAttribute('data-id');
-      const goToDetail = () => {
-        if (id) window.location.hash = `#!/details?id=${id}`;
-      };
-      card.addEventListener('click', goToDetail);
-      card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === 'Select' || e.keyCode === 13) goToDetail();
-      });
-    });
-  }
-
-  async function loadActivityFeedData() {
-    if (!cachedActivityFeed || (Date.now() - lastFeedFetchTime) > 60000) {
-      try {
-        cachedActivityFeed = await fetchAllFamilyActivity();
-        lastFeedFetchTime = Date.now();
-      } catch (e) {
-        console.warn('[AetherFin] Error fetching family activity:', e);
+    // Auto-dismiss after 6.5 seconds
+    setTimeout(() => {
+      if (card && card.parentNode) {
+        card.style.transition = 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(-20px)';
+        setTimeout(() => { if (card.parentNode) card.remove(); }, 400);
       }
-    }
-    renderActivityGrid();
+    }, 6500);
   }
 
-  /* -------------------------------------------------------------------------
-     HEADER NAVIGATION TAB INJECTION (Next to Favorites, Movies, Shows)
-     ------------------------------------------------------------------------- */
-  function injectActivityHeaderTab() {
-    if (document.getElementById('aetherfin-nav-activity')) return;
+  let lastCelebratedTitle = null;
 
-    // Find the header elements
-    const header = document.querySelector('.skinHeader, header, .headerTop, #reactRoot header');
-    if (!header) return;
-
-    // Search for the element containing text "Shows"
-    let targetLink = null;
-    const candidates = header.querySelectorAll('a, button, [role="tab"], .navMenuOption, .headerButton, .MuiButtonBase-root, .emby-tab-button');
-    for (const el of candidates) {
-      const txt = (el.textContent || '').trim().toLowerCase();
-      if (txt === 'shows' || txt.endsWith('shows') || txt.includes('shows')) {
-        targetLink = el.closest('a, button, [role="tab"], .navMenuOption, .headerButton, .MuiButtonBase-root, .emby-tab-button') || el;
-        break;
+  function triggerMovieFinishedCelebration(rawTitle) {
+    let title = rawTitle;
+    if (!title || title === 'Jellyfin') {
+      const pageTitleEl = document.querySelector('.pageTitle, .videoPlayerText, .osdTitle, .itemName, h1.itemName');
+      if (pageTitleEl && pageTitleEl.textContent.trim()) {
+        title = pageTitleEl.textContent.trim();
+      } else {
+        title = document.title ? document.title.replace('- Jellyfin', '').trim() : 'Feature Film';
       }
     }
 
-    // Fallback to "Movies" if "Shows" is not found
-    if (!targetLink) {
-      for (const el of candidates) {
-        const txt = (el.textContent || '').trim().toLowerCase();
-        if (txt === 'movies' || txt.endsWith('movies') || txt.includes('movies')) {
-          targetLink = el.closest('a, button, [role="tab"], .navMenuOption, .headerButton, .MuiButtonBase-root, .emby-tab-button') || el;
-          break;
-        }
-      }
-    }
+    if (!title || lastCelebratedTitle === title) return;
+    lastCelebratedTitle = title;
+    setTimeout(() => { lastCelebratedTitle = null; }, 20000); // 20s cooldown
 
-    if (!targetLink) return;
-
-    // Clone targetLink to inherit identical styles, heights, typography, and hover physics
-    const activityBtn = targetLink.cloneNode(true);
-    activityBtn.id = 'aetherfin-nav-activity';
-    activityBtn.setAttribute('data-nav', 'activity');
-    activityBtn.removeAttribute('href');
-
-    // Replace text and icon inside clone cleanly
-    const allSpans = activityBtn.querySelectorAll('span, div, p');
-    if (allSpans.length >= 2) {
-      // First span is typically icon, last span is text
-      allSpans[0].textContent = '👥';
-      allSpans[allSpans.length - 1].textContent = 'Activity';
-    } else if (allSpans.length === 1) {
-      allSpans[0].textContent = 'Activity';
-    } else {
-      activityBtn.innerHTML = `<span class="aetherfin-nav-icon">👥</span> <span>Activity</span>`;
-    }
-
-    // Click handler to navigate
-    activityBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      window.location.hash = '#!/activity';
-    });
-
-    // Insert immediately after Shows!
-    targetLink.after(activityBtn);
-    console.log('[AetherFin] Added Activity page navigation tab to header.');
+    console.log('[AetherFin] 🎬 Movie Finished Celebration triggered for:', title);
+    playCelebrationChime();
+    showAchievementCard(title, 'Marked as completed');
   }
 
-  /* -------------------------------------------------------------------------
-     ROUTE CONTROLLER (Handles #!/activity Page View)
-     ------------------------------------------------------------------------- */
-  function updateActivityPageRoute() {
-    const isActivityRoute = (window.location.hash || '').startsWith('#!/activity');
-    const activityBtn = document.getElementById('aetherfin-nav-activity');
-    const page = createActivityPage();
-
-    if (isActivityRoute) {
-      page.classList.add('active');
-      if (activityBtn) {
-        activityBtn.classList.add('emby-tab-button-active', 'active', 'buttonActive', 'Mui-selected');
-      }
-
-      // Hide other background Jellyfin pages
-      document.querySelectorAll('.mainAnimatedPages > .page:not(#aetherfin-activity-page), #reactRoot > div:not(#aetherfin-activity-page)').forEach(el => {
-        if (!el.classList.contains('skinHeader') && !el.closest('.skinHeader')) {
-          el.style.display = 'none';
-        }
-      });
-
-      loadActivityFeedData();
-    } else {
-      if (page) page.classList.remove('active');
-      if (activityBtn) {
-        activityBtn.classList.remove('emby-tab-button-active', 'active', 'buttonActive', 'Mui-selected');
-      }
-
-      // Restore other background pages
-      document.querySelectorAll('.mainAnimatedPages > .page, #reactRoot > div').forEach(el => {
-        if (el !== page && el.style.display === 'none') {
-          el.style.display = '';
-        }
-      });
-    }
-  }
-
-  // Periodic checks to keep header button mounted across view transitions
+  // 1. Monitor active <video> playback completion
   setInterval(() => {
-    injectActivityHeaderTab();
-    updateActivityPageRoute();
+    const videos = document.querySelectorAll('video');
+    videos.forEach(v => {
+      if (!v.__aether_watch_bound__) {
+        v.__aether_watch_bound__ = true;
+
+        v.addEventListener('timeupdate', () => {
+          if (v.duration && v.duration > 45 && !v.__aether_completed__) {
+            const progress = v.currentTime / v.duration;
+            if (progress >= 0.96) {
+              v.__aether_completed__ = true;
+              triggerMovieFinishedCelebration();
+            }
+          }
+        });
+
+        v.addEventListener('ended', () => {
+          if (!v.__aether_completed__) {
+            v.__aether_completed__ = true;
+            triggerMovieFinishedCelebration();
+          }
+        });
+      }
+    });
   }, 1000);
 
-  window.addEventListener('hashchange', updateActivityPageRoute);
-  window.addEventListener('popstate', updateActivityPageRoute);
+  // 2. Monitor Jellyfin's native playbackstop event
+  document.addEventListener('playbackstop', (e) => {
+    try {
+      const detail = e.detail;
+      if (detail && (detail.isPlayed || (detail.positionTicks && detail.item && detail.item.RunTimeTicks && (detail.positionTicks / detail.item.RunTimeTicks >= 0.90)))) {
+        const item = detail.item;
+        const title = item ? (item.SeriesName ? `${item.SeriesName} - ${item.Name}` : item.Name) : null;
+        triggerMovieFinishedCelebration(title);
+      }
+    } catch (err) {}
+  });
+
+  // Ensure any lingering tabs or shelves are removed continuously
+  setInterval(() => {
+    const navTab = document.getElementById('aetherfin-nav-activity');
+    if (navTab) navTab.remove();
+    const page = document.getElementById('aetherfin-activity-page');
+    if (page) page.remove();
+    const shelf = document.querySelector('.sectionFamilyActivity');
+    if (shelf) shelf.remove();
+  }, 2000);
 
 })();

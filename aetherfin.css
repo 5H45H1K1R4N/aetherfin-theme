@@ -3,7 +3,7 @@
  * Visual Theme: Zombie Revived (MakD/zombie-release) - AMOLED Black & Minimalist UI
  * Hero Showcase: Jellyfin Media Bar with Zombie Marquee Styling
  * Audio Engine: AetherFin FX (Local Server Theme Audio & UI Feedback)
- * Page Engine: Dedicated Family Activity Library Page & Header Nav Tab
+ * Celebration: "Movie Finished!" Trophy Achievement Card
  * Author: 5H45H1K1R4N
  * Repository: https://github.com/5H45H1K1R4N/aetherfin-theme
  */
@@ -93,202 +93,112 @@
 }
 
 /* =========================================================================
-   6. DEDICATED FAMILY ACTIVITY PAGE (Nav Bar Tab & Full View)
+   6. "MOVIE FINISHED!" CELEBRATION & ACHIEVEMENT CARD (Apple TV / PS5 Trophy Style)
    ========================================================================= */
-
-/* Header Tab Item */
-#aetherfin-nav-activity {
-  cursor: pointer !important;
-  user-select: none !important;
-  transition: all 0.2s ease !important;
-  display: inline-flex !important;
-  align-items: center !important;
-}
-
-#aetherfin-nav-activity .aetherfin-nav-icon {
-  margin-right: 6px;
-  font-size: 15px;
-  line-height: 1;
-}
-
-/* Full Dedicated Activity Page Container */
-#aetherfin-activity-page {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  min-height: 100vh;
-  box-sizing: border-box;
-  padding: 85px clamp(16px, 4vw, 48px) 60px clamp(16px, 4vw, 48px);
-  background: #0a0a0a;
-  z-index: 99;
-  display: none;
-  overflow-y: auto;
-}
-
-#aetherfin-activity-page.active {
-  display: block !important;
-}
-
-/* Page Header */
-.activity-page-header {
-  margin-bottom: 24px;
-}
-
-.activity-page-title-row {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-
-.activity-page-title {
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  color: #ffffff;
-  margin: 0;
-}
-
-.activity-page-subtitle {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.45);
-  font-weight: 400;
-}
-
-/* Filter Bar */
-.activity-filter-bar {
+#aether-achievement-card {
+  position: fixed;
+  top: 28px;
+  right: 28px;
+  z-index: 99999999;
   display: flex;
   align-items: center;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 4px 0 16px 0;
-  margin-bottom: 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.activity-filter-bar::-webkit-scrollbar {
-  display: none;
-}
-
-.activity-filter-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.7);
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s ease;
+  gap: 16px;
+  background: rgba(14, 14, 14, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-left: 3.5px solid rgb(var(--accent, 0, 172, 111));
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85), 0 0 20px rgba(0, 172, 111, 0.15);
+  border-radius: 14px;
+  padding: 14px 20px 14px 16px;
+  color: #ffffff;
+  max-width: 380px;
+  min-width: 280px;
+  box-sizing: border-box;
+  animation: aetherAchievementSlide 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   user-select: none;
+  pointer-events: auto;
 }
 
-.activity-filter-btn:hover,
-.activity-filter-btn:focus-visible {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  outline: none;
-}
-
-.activity-filter-btn.active {
-  background: rgb(var(--accent, 0, 172, 111));
-  border-color: rgb(var(--accent, 0, 172, 111));
-  color: #000;
-  font-weight: 700;
-}
-
-/* Library Grid */
-.activity-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
-  gap: 24px 16px;
-}
-
-@media (max-width: 600px) {
-  .activity-grid {
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 16px 12px;
+@keyframes aetherAchievementSlide {
+  0% {
+    transform: translateY(-30px) scale(0.96);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
   }
 }
 
-.activity-grid-card {
-  margin: 0 !important;
-  cursor: pointer !important;
-  user-select: none !important;
+.aether-achievement-icon-wrap {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 10px;
+  background: rgba(0, 172, 111, 0.15);
+  border: 1px solid rgba(0, 172, 111, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #00ac6f;
 }
 
-.activity-grid-card .cardScalable {
-  border-radius: 10px !important;
-  overflow: hidden !important;
-  background: #141414 !important;
-  aspect-ratio: 2/3 !important;
-  position: relative !important;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5) !important;
+.aether-achievement-body {
+  flex: 1;
+  min-width: 0;
 }
 
-.activity-grid-card img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  display: block !important;
+.aether-achievement-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #00ac6f;
+  margin-bottom: 2px;
 }
 
-/* Discreet Frosted Dark User Tag in Poster Corner */
-.activity-card-badge {
-  position: absolute !important;
-  top: 8px !important;
-  left: 8px !important;
-  z-index: 5 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 5px !important;
-  padding: 3.5px 8px !important;
-  background: rgba(10, 10, 10, 0.8) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-radius: 6px !important;
-  font-size: 11px !important;
-  font-weight: 600 !important;
-  color: #f4f4f5 !important;
-  letter-spacing: -0.01em !important;
-  pointer-events: none !important;
+.aether-achievement-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
-.activity-user-dot {
-  width: 6px !important;
-  height: 6px !important;
-  border-radius: 50% !important;
-  display: inline-block !important;
-  flex-shrink: 0 !important;
+.aether-achievement-sub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.activity-card-time {
-  color: rgba(255, 255, 255, 0.45) !important;
-  font-weight: 400 !important;
+.aether-achievement-dismiss {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: color 0.15s ease;
 }
 
-.activity-grid-card .cardFooter {
-  padding: 8px 2px 2px 2px !important;
+.aether-achievement-dismiss:hover {
+  color: #ffffff;
 }
 
-.activity-grid-card .cardText-first {
-  font-size: 13.5px !important;
-  font-weight: 600 !important;
-  color: #f4f4f5 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-}
-
-.activity-grid-card .cardText-secondary {
-  font-size: 12px !important;
-  color: rgba(255, 255, 255, 0.45) !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  margin-top: 2px !important;
+@media (max-width: 768px) {
+  #aether-achievement-card {
+    top: calc(env(safe-area-inset-top, 0px) + 16px);
+    right: 16px;
+    left: 16px;
+    max-width: none;
+  }
 }
