@@ -7,7 +7,7 @@
  directly into movie and TV show folders as 'theme.mp3' or 'theme.m4a'.
  
  Features:
- 1. Automatic Fallback: Works with or without ffmpeg (downloads native M4A).
+ 1. Robust Engine: Automatically detects broken ffmpeg and falls back to native M4A.
  2. Shared Folder Safety: Uses <MovieName>-theme if files share a directory.
  3. Duration Filter: Automatically selects official tracks (45s to 360s).
  4. Instant Indexing: Refreshes Jellyfin so music plays immediately.
@@ -19,7 +19,7 @@
 import os
 import sys
 import time
-import shutil
+import subprocess
 import argparse
 import urllib.request
 import urllib.parse
@@ -34,6 +34,20 @@ except ImportError:
 # Default configuration
 DEFAULT_SERVER = "http://127.0.0.1:8096"
 DEFAULT_TOKEN = "2d2051fbff00417eb2526343d3e1450f"
+
+
+def is_ffmpeg_functional():
+    """Verify that ffmpeg actually runs without dynamic linking errors (e.g. missing libplacebo)."""
+    try:
+        proc = subprocess.run(
+            ["ffmpeg", "-version"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=3
+        )
+        return proc.returncode == 0
+    except Exception:
+        return False
 
 
 def get_jellyfin_headers(token):
@@ -61,7 +75,7 @@ def get_target_theme_base(item_path, item_type="Movie"):
 
 def check_existing_theme(target_base):
     """Check if any theme file exists for this item."""
-    for ext in [".mp3", ".m4a", ".flac", ".ogg"]:
+    for ext in [".m4a", ".mp3", ".flac", ".ogg"]:
         if os.path.exists(f"{target_base}{ext}"):
             return f"{target_base}{ext}"
     return None
@@ -127,7 +141,6 @@ def find_best_youtube_track(query):
             for entry in entries:
                 dur = entry.get("duration") or 0
                 title = entry.get("title", "")
-                # Skip 1-hour+ albums or 15-second teaser shorts
                 if 45 <= dur <= 360:
                     return {
                         "url": entry.get("url") or f"https://www.youtube.com/watch?v={entry.get('id')}",
@@ -139,9 +152,9 @@ def find_best_youtube_track(query):
     return None
 
 
-def download_theme_audio(video_url, target_base, dry_run=False):
-    """Download audio stream from YouTube with or without ffmpeg."""
-    has_ffmpeg = shutil.which("ffmpeg") is not None
+def download_theme_audio(video_url, target_base, dry_run=False, force_no_ffmpeg=False):
+    """Download audio stream from YouTube with automatic ffmpeg fallback."""
+    has_ffmpeg = (not force_no_ffmpeg) and is_ffmpeg_functional()
     out_tmpl = f"{target_base}.%(ext)s"
 
     if dry_run:
@@ -164,7 +177,7 @@ def download_theme_audio(video_url, target_base, dry_run=False):
             "overwrites": True
         }
     else:
-        # No ffmpeg installed! Download native high-quality AAC/M4A directly (zero dependencies)
+        # Download native high-quality AAC/M4A directly (100% pure Python, zero FFmpeg dependencies!)
         ydl_opts = {
             "format": "bestaudio[ext=m4a]/bestaudio[ext=mp3]/bestaudio",
             "outtmpl": out_tmpl,
@@ -181,23 +194,26 @@ def download_theme_audio(video_url, target_base, dry_run=False):
         if saved_file:
             return saved_file
     except Exception as e:
-        print(f"    [!] Download failed: {e}")
+        print(f"    [!] Download error: {e}")
+        # If ffmpeg failed unexpectedly during postprocessing, retry with native m4a
+        if has_ffmpeg:
+            print("    [!] Retrying download with native M4A mode (bypassing ffmpeg)...")
+            return download_theme_audio(video_url, target_base, dry_run=dry_run, force_no_ffmpeg=True)
 
     return None
 
 
-def process_missing_items(server_url, token, dry_run=False):
+def process_missing_items(server_url, token, dry_run=False, force_no_ffmpeg=False):
     """Process all items missing theme music."""
     missing = get_items_without_themes(server_url, token)
     if not missing:
         print("[✓] All movies and series have theme music!")
         return 0
 
-    has_ffmpeg = shutil.which("ffmpeg") is not None
+    has_ffmpeg = (not force_no_ffmpeg) and is_ffmpeg_functional()
     if not has_ffmpeg:
-        print("[i] Notice: ffmpeg not detected in PATH. Downloading native high-quality M4A themes (supported natively by Jellyfin).")
-        print("    (To enable MP3 conversion, run: pkg install ffmpeg -y in Termux)
-")
+        print("[i] Using native high-quality M4A mode (100% pure Python, zero FFmpeg dependencies).")
+        print("    Jellyfin natively plays .m4a theme files out of the box!\n")
 
     print(f"[*] Found {len(missing)} item(s) without theme songs.")
     processed = 0
@@ -208,10 +224,8 @@ def process_missing_items(server_url, token, dry_run=False):
         target_base = item["target_base"]
         parent_dir = os.path.dirname(target_base)
 
-        print(f"
-[{idx}/{len(missing)}] Processing: {name} {year}")
+        print(f"\n[{idx}/{len(missing)}] Processing: {name} {year}")
 
-        # Check write permissions
         if not os.path.exists(parent_dir):
             print(f"    [!] Directory not accessible: {parent_dir}")
             continue
@@ -228,10 +242,10 @@ def process_missing_items(server_url, token, dry_run=False):
             print("    [x] No matching audio track found.")
             continue
 
-        print(f"    Found: "{best_track['title']}" ({best_track['duration']}s)")
+        print(f"    Found: \"{best_track['title']}\" ({best_track['duration']}s)")
         print(f"    Downloading to: {target_base}... ")
 
-        saved_path = download_theme_audio(best_track["url"], target_base, dry_run=dry_run)
+        saved_path = download_theme_audio(best_track["url"], target_base, dry_run=dry_run, force_no_ffmpeg=force_no_ffmpeg)
         if saved_path:
             print(f"    [✓] Successfully saved: {os.path.basename(saved_path)}!")
             if not dry_run:
@@ -253,6 +267,7 @@ def main():
     parser.add_argument("--watch", action="store_true", help="Run continuously in background, checking for new movies every N minutes")
     parser.add_argument("--interval", type=int, default=300, help="Interval in seconds for watch mode (default: 300s / 5 mins)")
     parser.add_argument("--dry-run", action="store_true", help="Simulate searches without downloading files")
+    parser.add_argument("--no-ffmpeg", action="store_true", help="Force pure Python native M4A download mode (bypasses FFmpeg completely)")
 
     args = parser.parse_args()
 
@@ -269,7 +284,7 @@ def main():
                 pass
 
     print("=" * 65)
-    print(" 🎬 Jellyfin Auto Theme Song Engine (Auto-Fallback & Safe Naming)")
+    print(" 🎬 Jellyfin Auto Theme Song Engine (Zero-FFmpeg Pure Python Mode)")
     print("=" * 65)
     print(f" Server:  {server}")
     print(f" Mode:    {'Watch Mode (Daemon every ' + str(args.interval) + 's)' if args.watch else 'Single Scan'}")
@@ -278,18 +293,16 @@ def main():
     print("=" * 65)
 
     if args.watch:
-        print("[*] Starting watcher daemon. Press Ctrl+C to stop.
-")
+        print("[*] Starting watcher daemon. Press Ctrl+C to stop.\n")
         while True:
             try:
-                process_missing_items(server, args.token, dry_run=args.dry_run)
+                process_missing_items(server, args.token, dry_run=args.dry_run, force_no_ffmpeg=args.no_ffmpeg)
             except Exception as e:
                 print(f"[!] Cycle error: {e}")
-            print(f"
-[*] Sleeping for {args.interval}s until next check...")
+            print(f"\n[*] Sleeping for {args.interval}s until next check...")
             time.sleep(args.interval)
     else:
-        process_missing_items(server, args.token, dry_run=args.dry_run)
+        process_missing_items(server, args.token, dry_run=args.dry_run, force_no_ffmpeg=args.no_ffmpeg)
 
 
 if __name__ == "__main__":
