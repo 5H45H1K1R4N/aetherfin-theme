@@ -15,7 +15,18 @@
     "toxic": `${CDN_BASE}/toxic.mp3`,
     "stranger things": `${CDN_BASE}/stranger-things.mp3`,
     "dhoni": `${CDN_BASE}/ms-dhoni.mp3`,
-    "ms dhoni": `${CDN_BASE}/ms-dhoni.mp3`
+    "ms dhoni": `${CDN_BASE}/ms-dhoni.mp3`,
+    "tokyo drift": `${CDN_BASE}/tokyo-drift.mp3`,
+    "phata poster": `${CDN_BASE}/phata-poster.mp3`,
+    "iron man": `${CDN_BASE}/iron-man.mp3`,
+    "avengers": `${CDN_BASE}/avengers.mp3`,
+    "doraemon": `${CDN_BASE}/doraemon.mp3`,
+    "jailer": `${CDN_BASE}/jailer-2.mp3`,
+    "premada oorali": `${CDN_BASE}/premada-oorali.mp3`,
+    "your name": `${CDN_BASE}/your-name.mp3`,
+    "hanuman ansh": `${CDN_BASE}/hanuman-ansh.mp3`,
+    "spider-man": `${CDN_BASE}/spider-man.mp3`,
+    "spider man": `${CDN_BASE}/spider-man.mp3`
   };
 
   /* =========================================================================
