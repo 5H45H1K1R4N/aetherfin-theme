@@ -1,0 +1,12 @@
+﻿:root {
+  --af-accent-primary: #991eeb !important;
+  --af-accent-glow: rgba(153, 30, 235, 0.45) !important;
+}
+@import url(https://cdn.jsdelivr.net/gh/MakD/zombie-release@latest/color-schemes/hbo-max.css);
+.countIndicator, .playedIndicator {
+  background: linear-gradient(135deg, #991eeb, #7c3aed) !important;
+}
+.itemProgressBarForeground, .playbackProgress > div {
+  background: linear-gradient(90deg, #991eeb, #c084fc) !important;
+  box-shadow: 0 0 10px rgba(153, 30, 235, 0.6) !important;
+}

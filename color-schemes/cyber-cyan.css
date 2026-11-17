@@ -1,0 +1,11 @@
+﻿:root {
+  --af-accent-primary: #06b6d4 !important;
+  --af-accent-glow: rgba(6, 182, 212, 0.45) !important;
+}
+.countIndicator, .playedIndicator {
+  background: linear-gradient(135deg, #06b6d4, #0284c7) !important;
+}
+.itemProgressBarForeground, .playbackProgress > div {
+  background: linear-gradient(90deg, #06b6d4, #3b82f6) !important;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.6) !important;
+}

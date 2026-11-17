@@ -1,0 +1,13 @@
+﻿:root {
+  --af-bg-base: #000000 !important;
+  --af-accent-primary: #ffffff !important;
+  --af-accent-glow: rgba(255, 255, 255, 0.25) !important;
+}
+html, body, .backgroundContainer {
+  background-color: #000000 !important;
+}
+.countIndicator, .playedIndicator {
+  background: #222222 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+}
