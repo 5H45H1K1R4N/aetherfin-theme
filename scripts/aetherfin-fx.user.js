@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AetherFin Suite — Universal Theme Switcher & Mobile Audio Engine
 // @namespace    https://jellyfin.org/
-// @version      7.0.0
+// @version      8.0.0
 // @description  Universal Theme Switcher (NeutralFin, Ultrachromic & Cyber-OLED), 100% phone app audio playback, and complete library theme music.
 // @author       5H45H1K1R4N
 // @match        *://*/*
@@ -12,11 +12,10 @@
 (function () {
   'use strict';
 
-  // Allow re-run if updated
-  if (window.__AETHERFIN_V7_LOADED__) return;
-  window.__AETHERFIN_V7_LOADED__ = true;
+  if (window.__AETHERFIN_V8_LOADED__) return;
+  window.__AETHERFIN_V8_LOADED__ = true;
 
-  console.log('%c[AetherFin Suite v7]%c Universal Mobile & Theme Engine Active', 
+  console.log('%c[AetherFin Suite v8]%c Bulletproof Mobile & Theme Switcher Active', 
               'color: #e50914; font-weight: bold; font-size: 14px;', 'color: #06b6d4; font-weight: bold;');
 
   const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
@@ -88,10 +87,8 @@
     console.log(`[AetherFin] Active theme switched to: ${theme.name}`);
   }
 
-  // Apply saved theme immediately
   applyTheme(getActiveThemeId());
 
-  // Render Theme Switcher Modal
   function openThemeModal() {
     let modal = document.getElementById('aetherfin-theme-modal');
     if (modal) {
@@ -230,7 +227,6 @@
 
     grid.querySelectorAll('.aether-theme-card').forEach(card => {
       card.addEventListener('click', () => {
-        playTick();
         const id = card.getAttribute('data-id');
         applyTheme(id);
         renderThemeCards();
@@ -238,7 +234,6 @@
     });
   }
 
-  // Permanent Floating Theme Switcher Button (100% Guaranteed on Desktop & Mobile)
   function ensureFloatingThemeButton() {
     if (document.getElementById('aetherfin-floating-theme-btn')) return;
 
@@ -255,10 +250,10 @@
       display: flex;
       align-items: center;
       gap: 7px;
-      background: rgba(24, 24, 27, 0.88);
+      background: rgba(24, 24, 27, 0.9);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
       padding: 8px 14px;
       border-radius: 9999px;
@@ -274,48 +269,14 @@
 
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      playTick();
       openThemeModal();
     });
 
     document.body.appendChild(btn);
   }
 
-  // Also inject button into header if possible
-  function injectHeaderButton() {
-    if (document.getElementById('aetherfin-header-theme-btn')) return;
-    const header = document.querySelector('.headerRight, .skinHeader-right, header, .MuiAppBar-root');
-    if (!header) return;
-
-    const btn = document.createElement('button');
-    btn.id = 'aetherfin-header-theme-btn';
-    btn.type = 'button';
-    btn.title = 'Change Theme';
-    btn.style.cssText = `
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 9999px;
-      padding: 6px 12px;
-      margin: 0 4px;
-      color: #f4f4f5;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      vertical-align: middle;
-    `;
-    btn.innerHTML = `<span>🎨</span><span>Theme</span>`;
-    btn.addEventListener('click', openThemeModal);
-    header.insertBefore(btn, header.firstChild);
-  }
-
   ensureFloatingThemeButton();
-  setInterval(() => {
-    ensureFloatingThemeButton();
-    injectHeaderButton();
-  }, 1000);
+  setInterval(ensureFloatingThemeButton, 1000);
 
   /* =========================================================================
      2. COMPLETE THEME AUDIO DATABASE (33 TITLES)
@@ -359,36 +320,47 @@
   ];
 
   /* =========================================================================
-     3. UNIVERSAL CROSS-PLATFORM AUDIO CONTROLLER (100% PHONE APP WORKING)
+     3. UNIVERSAL REUSABLE AUDIO PIPELINE (GUARANTEED FOR PHONE APP)
      ========================================================================= */
-  let activeAudio = null;
+  // Create single permanent audio element attached to document body
+  let globalAudio = document.getElementById('aetherfin-global-audio');
+  if (!globalAudio) {
+    globalAudio = document.createElement('audio');
+    globalAudio.id = 'aetherfin-global-audio';
+    globalAudio.setAttribute('playsinline', '');
+    globalAudio.setAttribute('webkit-playsinline', '');
+    globalAudio.preload = 'auto';
+    globalAudio.style.display = 'none';
+    document.body.appendChild(globalAudio);
+  }
+
   let activeTheme = null;
   let isMuted = false;
-  let fadeInterval = null;
-  let isNavigatingToDetail = false;
-  let isDetailPage = false;
-  let hoverTimer = null;
-  let currentCardElem = null;
+  let fadeTimer = null;
+  let isAudioUnlocked = false;
 
-  function playTick() {
-    // Subtle tactile click using web audio if running
+  // Unlock audio on the very first touch/click
+  function unlockAudio() {
+    if (isAudioUnlocked) return;
     try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return;
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(140, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.025);
-      gain.gain.setValueAtTime(0.025, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.025);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.028);
+      globalAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAP8A';
+      const p = globalAudio.play();
+      if (p !== undefined) {
+        p.then(() => {
+          isAudioUnlocked = true;
+          console.log('[AetherFin] Mobile Audio Pipeline Unlocked!');
+        }).catch(() => {});
+      }
     } catch (e) {}
+
+    ['touchstart', 'touchend', 'click', 'pointerdown'].forEach(evt => {
+      document.removeEventListener(evt, unlockAudio);
+    });
   }
+
+  ['touchstart', 'touchend', 'click', 'pointerdown'].forEach(evt => {
+    document.addEventListener(evt, unlockAudio, { passive: true, once: false });
+  });
 
   function normalize(str) {
     if (!str) return '';
@@ -411,66 +383,42 @@
     return null;
   }
 
-  function extractCardTitle(card) {
-    if (!card) return '';
-    const selectors = [
-      '.cardText-first',
-      '.cardText',
-      '.cardTitle',
-      '.itemName',
-      'a[data-itemid]',
-      'h1'
-    ];
-    for (const sel of selectors) {
-      const el = card.querySelector(sel);
-      if (el && el.textContent.trim()) return el.textContent.trim();
-    }
-    return card.getAttribute('data-title') || 
-           card.getAttribute('aria-label') || 
-           card.getAttribute('title') || 
-           card.textContent.trim().split('\n')[0] || '';
-  }
-
   function stopMusic(fadeMs = 300) {
-    if (!activeAudio) return;
-    const audio = activeAudio;
-    activeAudio = null;
+    if (!activeTheme) return;
     activeTheme = null;
     updateFloatingPill(null);
 
-    if (fadeInterval) clearInterval(fadeInterval);
+    if (fadeTimer) clearInterval(fadeTimer);
 
     const stepMs = 25;
     const steps = fadeMs / stepMs;
-    const volStep = (audio.volume || 0.2) / steps;
+    const volStep = (globalAudio.volume || 0.2) / steps;
 
-    fadeInterval = setInterval(() => {
+    fadeTimer = setInterval(() => {
       try {
-        if (audio.volume > volStep) {
-          audio.volume -= volStep;
+        if (globalAudio.volume > volStep) {
+          globalAudio.volume -= volStep;
         } else {
-          audio.volume = 0;
-          clearInterval(fadeInterval);
-          audio.pause();
-          audio.src = '';
-          audio.remove();
+          globalAudio.volume = 0;
+          clearInterval(fadeTimer);
+          globalAudio.pause();
         }
       } catch (e) {
-        clearInterval(fadeInterval);
-        try { audio.pause(); } catch (err) {}
+        clearInterval(fadeTimer);
+        try { globalAudio.pause(); } catch (err) {}
       }
     }, stepMs);
   }
 
-  function playTheme(theme, targetVolume = 0.22) {
+  function playTheme(theme, targetVolume = 0.25) {
     if (isMuted || !theme) return;
-    if (activeAudio && activeTheme && activeTheme.url === theme.url) {
-      return; // Already playing this track
+    if (activeTheme && activeTheme.url === theme.url && !globalAudio.paused) {
+      return; // Already playing
     }
 
-    stopMusic(150);
+    if (fadeTimer) clearInterval(fadeTimer);
 
-    // Check if video is playing in Jellyfin
+    // Stop if a video is actively playing in Jellyfin
     const isVideoPlaying = document.querySelector('video:not(.paused)') && !document.querySelector('video').paused;
     if (isVideoPlaying) return;
 
@@ -478,97 +426,89 @@
     updateFloatingPill(theme.title);
 
     try {
-      const audio = new Audio();
-      audio.crossOrigin = "anonymous";
-      audio.src = theme.url;
-      audio.loop = true;
-      audio.volume = 0.02; // Start quiet for smooth fade-in
+      globalAudio.pause();
+      globalAudio.crossOrigin = "anonymous";
+      globalAudio.src = theme.url;
+      globalAudio.loop = true;
+      globalAudio.volume = 0.05;
 
-      activeAudio = audio;
-
-      const playPromise = audio.play();
+      const playPromise = globalAudio.play();
       if (playPromise !== undefined) {
         playPromise.then(() => {
-          // Smooth software volume fade-in (100% works on Android WebView & iOS)
-          let currentVol = 0.02;
+          let currentVol = 0.05;
           const fadeIn = setInterval(() => {
-            if (activeAudio !== audio) {
+            if (!activeTheme || activeTheme.url !== theme.url) {
               clearInterval(fadeIn);
               return;
             }
-            currentVol += 0.02;
+            currentVol += 0.03;
             if (currentVol >= targetVolume) {
-              audio.volume = targetVolume;
+              globalAudio.volume = targetVolume;
               clearInterval(fadeIn);
             } else {
-              audio.volume = currentVol;
+              globalAudio.volume = currentVol;
             }
           }, 40);
         }).catch(err => {
-          console.log('[AetherFin] Autoplay waiting for user gesture:', err.message);
+          console.warn('[AetherFin] Play error on device:', err);
         });
       }
     } catch (e) {
-      console.warn('[AetherFin] playTheme error:', e);
+      console.warn('[AetherFin] Play exception:', e);
     }
   }
 
   /* =========================================================================
-     4. TOUCH & CLICK INTERCEPTION (Phone App Gesture Binding)
+     4. TOUCH, CLICK & ROUTE DETECTION (100% PHONE APP WORKING)
      ========================================================================= */
-  // On mobile phone or desktop click: start music immediately inside the gesture handler
-  function handleCardInteraction(e) {
-    const card = e.target.closest('.card, .cardBox, .listItem, a[data-itemid]');
+  let isNavigatingToDetail = false;
+  let isDetailPage = false;
+
+  // Intercept taps on movie cards on mobile phone and clicks on desktop
+  function onCardTapped(target) {
+    const card = target.closest('.card, .cardBox, .listItem, a[data-itemid], button[data-id]');
     if (card) {
-      const rawTitle = extractCardTitle(card);
-      const theme = findThemeForText(rawTitle);
+      const fullText = (card.textContent || '').replace(/\s+/g, ' ');
+      const theme = findThemeForText(fullText);
       if (theme) {
         isNavigatingToDetail = true;
-        // Start theme immediately inside user touch gesture to guarantee permissions
-        playTheme(theme, 0.24);
+        // Start theme immediately inside user touch gesture!
+        playTheme(theme, 0.25);
         setTimeout(() => { isNavigatingToDetail = false; }, 3500);
       }
     }
 
-    // Stop music if user clicks video play button
-    if (e.target.closest('.btnPlay, [data-action="play"], button[data-id="play"], .videoPlayButton')) {
+    // Stop if user taps play video
+    if (target.closest('.btnPlay, [data-action="play"], button[data-id="play"], .videoPlayButton')) {
       stopMusic(300);
     }
   }
 
-  document.addEventListener('click', handleCardInteraction, true);
+  document.addEventListener('click', (e) => {
+    onCardTapped(e.target);
+  }, true);
+
   document.addEventListener('touchend', (e) => {
-    // If user tapped a card on mobile
-    const card = e.target.closest('.card, .cardBox, .listItem');
-    if (card) {
-      const rawTitle = extractCardTitle(card);
-      const theme = findThemeForText(rawTitle);
-      if (theme) {
-        isNavigatingToDetail = true;
-        playTheme(theme, 0.24);
-        setTimeout(() => { isNavigatingToDetail = false; }, 3500);
-      }
-    }
+    if (e.target) onCardTapped(e.target);
   }, { passive: true });
 
-  /* =========================================================================
-     5. ROUTE & DETAIL PAGE DETECTION (Jellyfin 12 & Mobile SPA)
-     ========================================================================= */
-  function detectDetailPage() {
+  // Route / Details Page Checker (Works with Jellyfin 12 React router)
+  function checkRoute() {
     const hash = window.location.hash || '';
     const href = window.location.href || '';
-    const isDetailsRoute = hash.includes('details') || href.includes('details') || hash.includes('item?id=');
+    const isDetailRoute = hash.includes('details') || href.includes('details') || hash.includes('item?id=');
 
-    const detailHeader = document.querySelector('.itemName, .parentName, h1.itemName, .detailPagePrimaryContainer h1');
+    const detailTitleEl = document.querySelector('.itemName, .parentName, h1.itemName, .detailPagePrimaryContainer h1');
+    const docTitle = document.title ? document.title.replace('- Jellyfin', '').trim() : '';
 
-    if (isDetailsRoute || detailHeader) {
+    if (isDetailRoute || detailTitleEl) {
       isDetailPage = true;
-      const title = detailHeader ? detailHeader.textContent.trim() : document.title.replace(' - Jellyfin', '').trim();
-      const theme = findThemeForText(title);
+      const titleToMatch = detailTitleEl ? detailTitleEl.textContent.trim() : docTitle;
+      const theme = findThemeForText(titleToMatch);
 
       if (theme) {
-        if (!activeAudio || (activeTheme && activeTheme.url !== theme.url)) {
-          playTheme(theme, 0.22);
+        if (!activeTheme || activeTheme.url !== theme.url || globalAudio.paused) {
+          playTheme(theme, 0.24);
         }
       }
     } else {
@@ -579,17 +519,19 @@
     }
   }
 
-  // Observe route changes
-  window.addEventListener('popstate', detectDetailPage);
-  window.addEventListener('hashchange', detectDetailPage);
+  window.addEventListener('popstate', checkRoute);
+  window.addEventListener('hashchange', checkRoute);
   const routeObserver = new MutationObserver(() => {
-    detectDetailPage();
+    checkRoute();
   });
   routeObserver.observe(document.body, { childList: true, subtree: true });
 
   /* =========================================================================
-     6. DESKTOP HOVER PLAYBACK
+     5. DESKTOP HOVER PLAYBACK
      ========================================================================= */
+  let hoverTimer = null;
+  let currentCardElem = null;
+
   if (!isMobile) {
     document.addEventListener('mouseover', (e) => {
       if (isDetailPage || isNavigatingToDetail) return;
@@ -601,8 +543,8 @@
 
         hoverTimer = setTimeout(() => {
           if (currentCardElem === card && !isNavigatingToDetail && !isDetailPage) {
-            const rawTitle = extractCardTitle(card);
-            const theme = findThemeForText(rawTitle);
+            const fullText = (card.textContent || '').replace(/\s+/g, ' ');
+            const theme = findThemeForText(fullText);
             if (theme) {
               playTheme(theme, 0.18);
             }
@@ -627,7 +569,7 @@
   }
 
   /* =========================================================================
-     7. FLOATING AUDIO PILL (BOTTOM-RIGHT)
+     6. FLOATING AUDIO PILL (BOTTOM-RIGHT)
      ========================================================================= */
   let pillElem = null;
   function updateFloatingPill(title) {
@@ -649,10 +591,10 @@
         display: none;
         align-items: center;
         gap: 8px;
-        background: rgba(24, 24, 27, 0.88);
+        background: rgba(24, 24, 27, 0.9);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.18);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
         padding: 8px 14px;
         border-radius: 9999px;
