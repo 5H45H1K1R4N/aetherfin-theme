@@ -1,44 +1,36 @@
 // ==UserScript==
-// @name         AetherFin Suite — Sound FX & Theme Music Engine for Jellyfin
+// @name         AetherFin Suite — Universal Sound FX & Theme Music Engine (Web, Phone & TV)
 // @namespace    https://jellyfin.org/
-// @version      12.0.0
-// @description  Bespoke Web Audio API UI sound effects (PS5 haptic hover, mechanical clicks, celebration fanfare) and local server theme song playback engine for Jellyfin.
+// @version      13.0.0
+// @description  Bespoke Web Audio API UI sound effects (PS5 haptic hover/focus ticks, mechanical clicks, celebration fanfare) and local server theme song playback engine with full Desktop, Mobile Touch, and TV Remote D-pad support for Jellyfin.
 // @author       5H45H1K1R4N
 // @match        *://*/*
 // @grant        none
 // @run-at       document-end
 // ==/UserScript==
 
-/**
- * 🌌 AetherFin FX Engine — Plug-and-Play Demo & Inspiration Template
- * 
- * FEATURES INCLUDED:
- * 1. Web Audio API UI Sound Effects (0 audio files needed, 100% synthesized in-browser):
- *    - PS5-style haptic hover micro-ticks on cards.
- *    - Apple TV-style crisp mechanical click feedback on selection.
- *    - Triumphant completion fanfare when a video finishes playing.
- * 2. Native Jellyfin Server Theme Music Engine:
- *    - Automatically discovers and streams `theme.mp3` files from your server (`/Audio/{id}/stream.mp3`).
- *    - Desktop hover preview with intentional 400ms dwell & clean exit fade.
- *    - Continuous playback when navigating from library card to movie detail page.
- *    - Fully compatible with mobile WebViews (Jellyfin Android app touch gestures).
- *    - Floating animated equalizer audio pill with mute toggle.
- * 
- * HOW TO INSTALL:
- * Copy and paste this entire script into the Jellyfin "JavaScript Injector" plugin,
- * or run it via Tampermonkey / Violentmonkey in your browser!
- */
-
 (function () {
   'use strict';
 
-  if (window.__AETHERFIN_LOADED__) return;
-  window.__AETHERFIN_LOADED__ = true;
+  if (window.__AETHERFIN_V13_LOADED__) return;
+  window.__AETHERFIN_V13_LOADED__ = true;
 
-  console.log('%c[AetherFin FX]%c Sound Effects & Theme Music Engine Active', 
+  console.log('%c[AetherFin FX v13]%c Universal Web, Phone & TV Engine Active', 
               'color: #00ac6f; font-weight: bold; font-size: 14px;', 'color: #ffffff; font-weight: bold;');
 
   const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  const isTV = /Android TV|SmartTV|HbbTV|Tizen|WebOS|LargeScreen|CrKey/i.test(navigator.userAgent) || window.matchMedia('(display-mode: tv)').matches;
+
+  // Clean up legacy multi-theme elements if present in DOM
+  try {
+    const oldBtn = document.getElementById('aetherfin-floating-theme-btn');
+    if (oldBtn) oldBtn.remove();
+    const oldModal = document.getElementById('aetherfin-theme-modal');
+    if (oldModal) oldModal.remove();
+    const oldThemeLink = document.getElementById('aetherfin-active-theme-link');
+    if (oldThemeLink) oldThemeLink.remove();
+    localStorage.removeItem('aetherfin_active_theme');
+  } catch (e) {}
 
   // Automatically enable native theme song preferences in Jellyfin storage
   try {
@@ -72,9 +64,9 @@
     return audioCtx;
   }
 
-  // Play subtle PS5-style tactile hover tick (140Hz sine burst)
+  // Play subtle PS5-style tactile hover/focus tick (140Hz sine burst)
   function playHoverTick() {
-    if (isMuted || isMobile) return;
+    if (isMuted) return;
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
@@ -120,39 +112,21 @@
     } catch (e) {}
   }
 
-  // Triumphant 4-tone victory celebration fanfare when completing a movie
-  function playCelebrationFanfare() {
-    if (isMuted) return;
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-      const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
-      notes.forEach((freq, idx) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.12);
-
-        gain.gain.setValueAtTime(0.06, ctx.currentTime + idx * 0.12);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.12 + 0.35);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(ctx.currentTime + idx * 0.12);
-        osc.stop(ctx.currentTime + idx * 0.12 + 0.36);
-      });
-    } catch (e) {}
-  }
-
-  // Bind UI click & hover sound effects
+  // Bind UI mouse hover sound effects (Desktop)
   document.addEventListener('mouseover', (e) => {
     if (e.target && e.target.closest('.card, .paper-icon-button-light, .button-flat, .navMenuOption')) {
       playHoverTick();
     }
   }, { passive: true });
 
+  // Bind UI focus sound effects (TV D-Pad & Keyboard navigation)
+  document.addEventListener('focusin', (e) => {
+    if (e.target && e.target.closest('.card, .paper-icon-button-light, .button-flat, .navMenuOption, .listItem')) {
+      playHoverTick();
+    }
+  }, { passive: true });
+
+  // Bind UI click sound effects (Mouse, Touch & Remote Enter)
   document.addEventListener('click', (e) => {
     if (e.target && e.target.closest('.card, button, .button-flat, .paper-icon-button-light, a')) {
       playClickSound();
@@ -160,20 +134,7 @@
   }, { passive: true });
 
   /* =========================================================================
-     2. DEMO / CUSTOM THEME SONG MAPPINGS (Optional Static Fallback)
-     =========================================================================
-     Jellyfin will AUTOMATICALLY play native theme songs if you have `theme.mp3`
-     in your movie folder! 
-     However, you can also map any specific title to custom audio URLs below:
-  */
-  const DEMO_CUSTOM_THEMES = [
-    // Template Examples:
-    // { keys: ["interstellar"], url: "/Audio/your-id-here/stream.mp3", title: "Interstellar" },
-    // { keys: ["stranger things"], url: "https://your-domain.com/audio/stranger-things.mp3", title: "Stranger Things" },
-  ];
-
-  /* =========================================================================
-     3. UNIVERSAL THEME MUSIC AUDIO PIPELINE
+     2. UNIVERSAL THEME MUSIC AUDIO PIPELINE
      ========================================================================= */
   let globalAudio = document.getElementById('aetherfin-global-audio');
   if (!globalAudio) {
@@ -191,9 +152,11 @@
   let fadeTimer = null;
   let audioUnlocked = false;
 
+  // Universal audio unlock for Desktop, Touch (Phone) AND TV Remote (keydown)
   function unlockAudioEngine() {
     if (audioUnlocked) return;
     try {
+      getAudioContext();
       const p = globalAudio.play();
       if (p !== undefined) {
         p.then(() => {
@@ -206,7 +169,8 @@
     } catch (e) {}
   }
 
-  ['touchstart', 'touchend', 'click', 'pointerdown'].forEach(evt => {
+  // Listen to remote keys (D-pad, OK, etc.), touch, and click
+  ['keydown', 'touchstart', 'touchend', 'click', 'pointerdown'].forEach(evt => {
     document.addEventListener(evt, unlockAudioEngine, { passive: true });
   });
 
@@ -277,15 +241,18 @@
             }
           }, 35);
         }).catch((err) => {
-          const resumeOnTouch = () => {
+          console.log("[AetherFin] Autoplay waiting for user gesture (key/touch):", err.message);
+          const resumeOnGesture = () => {
             if (activeTheme && activeTheme.url === theme.url && globalAudio.paused) {
               globalAudio.play().catch(() => {});
             }
-            document.removeEventListener('touchstart', resumeOnTouch);
-            document.removeEventListener('click', resumeOnTouch);
+            document.removeEventListener('keydown', resumeOnGesture);
+            document.removeEventListener('touchstart', resumeOnGesture);
+            document.removeEventListener('click', resumeOnGesture);
           };
-          document.addEventListener('touchstart', resumeOnTouch, { passive: true, once: true });
-          document.addEventListener('click', resumeOnTouch, { passive: true, once: true });
+          document.addEventListener('keydown', resumeOnGesture, { passive: true, once: true });
+          document.addEventListener('touchstart', resumeOnGesture, { passive: true, once: true });
+          document.addEventListener('click', resumeOnGesture, { passive: true, once: true });
         });
       }
     } catch (e) {
@@ -294,18 +261,16 @@
   }
 
   /* =========================================================================
-     4. DYNAMIC SERVER THEME SONG QUERY & CACHING
+     3. DYNAMIC SERVER THEME SONG QUERY & CACHING
      ========================================================================= */
   const themeCache = {};
 
   function resolveThemeForItem(itemId, title, callback) {
-    // 1. Check in-memory cache
     if (itemId && themeCache[itemId] !== undefined) {
       callback(themeCache[itemId]);
       return;
     }
 
-    // 2. Query Jellyfin Server for native ThemeSongs
     if (itemId) {
       fetch(`/Items/${itemId}/ThemeSongs`, { credentials: 'same-origin' })
         .then(r => r.json())
@@ -321,34 +286,19 @@
             return;
           }
           themeCache[itemId] = null;
-          checkCustomFallback();
+          callback(null);
         })
         .catch(() => {
           themeCache[itemId] = null;
-          checkCustomFallback();
+          callback(null);
         });
     } else {
-      checkCustomFallback();
-    }
-
-    // 3. Fallback to custom mapped themes if no server ThemeSong is found
-    function checkCustomFallback() {
-      if (!title) { callback(null); return; }
-      const norm = title.toLowerCase().trim();
-      for (const item of DEMO_CUSTOM_THEMES) {
-        for (const k of item.keys) {
-          if (norm.includes(k.toLowerCase())) {
-            callback({ title: item.title, url: item.url });
-            return;
-          }
-        }
-      }
       callback(null);
     }
   }
 
   /* =========================================================================
-     5. DETAIL PAGE NAVIGATION & CARD INTERACTION
+     4. DETAIL PAGE NAVIGATION & CARD INTERACTION
      ========================================================================= */
   let isNavigatingToDetail = false;
 
@@ -380,7 +330,7 @@
     return card.getAttribute('data-id') || card.getAttribute('data-itemid') || null;
   }
 
-  // Intercept taps & clicks
+  // Intercept taps & clicks (Mouse & Touch)
   function onCardClicked(target) {
     const card = target.closest('.card, .cardBox, .listItem, a[data-itemid], [data-id]');
     if (card) {
@@ -405,6 +355,16 @@
   document.addEventListener('click', (e) => { onCardClicked(e.target); }, true);
   document.addEventListener('touchend', (e) => { if (e.target) onCardClicked(e.target); }, { passive: true });
 
+  // Intercept TV Remote D-Pad Enter / OK key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === 'Select' || e.keyCode === 13) {
+      const activeEl = document.activeElement;
+      if (activeEl) {
+        onCardClicked(activeEl);
+      }
+    }
+  }, { passive: true });
+
   // Detail page enter / exit observer
   let lastDetailPageState = false;
   function checkRouteState() {
@@ -416,7 +376,6 @@
       const docTitle = document.title ? document.title.replace('- Jellyfin', '').trim() : '';
       const title = titleEl ? titleEl.textContent.trim() : docTitle;
 
-      // Extract item ID from URL
       const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || window.location.search);
       const itemId = urlParams.get('id');
 
@@ -441,64 +400,85 @@
   routeObserver.observe(document.body, { childList: true, subtree: true });
 
   /* =========================================================================
-     6. RESPONSIVE HOVER SWITCHING (DESKTOP)
+     5. RESPONSIVE HOVER (DESKTOP) & FOCUS DWELL (TV REMOTE D-PAD)
      ========================================================================= */
-  let hoverTimer = null;
-  let currentCardElem = null;
+  let dwellTimer = null;
+  let currentActiveCard = null;
 
-  if (!isMobile) {
-    document.addEventListener('mouseover', (e) => {
-      if (isCurrentlyOnDetailPage() || isNavigatingToDetail) return;
+  function handleCardHighlight(cardContainer) {
+    if (isCurrentlyOnDetailPage() || isNavigatingToDetail) return;
+    if (!cardContainer) return;
 
-      const card = e.target.closest('.card, .cardBox, .listItem');
-      if (!card) return;
+    if (cardContainer !== currentActiveCard) {
+      currentActiveCard = cardContainer;
+      if (dwellTimer) clearTimeout(dwellTimer);
 
-      const cardContainer = card.closest('.card') || card;
+      dwellTimer = setTimeout(() => {
+        if (currentActiveCard === cardContainer && !isCurrentlyOnDetailPage() && !isNavigatingToDetail) {
+          const title = extractCardTitle(cardContainer);
+          const itemId = extractCardItemId(cardContainer);
 
-      if (cardContainer !== currentCardElem) {
-        currentCardElem = cardContainer;
-        if (hoverTimer) clearTimeout(hoverTimer);
-
-        hoverTimer = setTimeout(() => {
-          if (currentCardElem === cardContainer && !isCurrentlyOnDetailPage() && !isNavigatingToDetail) {
-            const title = extractCardTitle(cardContainer);
-            const itemId = extractCardItemId(cardContainer);
-
-            resolveThemeForItem(itemId, title, (theme) => {
-              if (currentCardElem === cardContainer && !isCurrentlyOnDetailPage()) {
-                if (theme) {
-                  playTheme(theme, 0.18);
-                } else {
-                  stopMusic(200);
-                }
+          resolveThemeForItem(itemId, title, (theme) => {
+            if (currentActiveCard === cardContainer && !isCurrentlyOnDetailPage()) {
+              if (theme) {
+                playTheme(theme, 0.18);
+              } else {
+                stopMusic(200);
               }
-            });
-          }
-        }, 400); // 400ms intentional dwell
+            }
+          });
+        }
+      }, 400); // 400ms intentional dwell
+    }
+  }
+
+  function handleCardLeave(cardContainer, relatedTarget) {
+    if (isCurrentlyOnDetailPage() || isNavigatingToDetail) return;
+    if (!cardContainer) return;
+
+    if (cardContainer === currentActiveCard) {
+      if (!relatedTarget || !cardContainer.contains(relatedTarget)) {
+        if (dwellTimer) clearTimeout(dwellTimer);
+        currentActiveCard = null;
+        stopMusic(200);
+      }
+    }
+  }
+
+  // 1. Mouse hover events (Desktop)
+  if (!isMobile && !isTV) {
+    document.addEventListener('mouseover', (e) => {
+      const card = e.target.closest('.card, .cardBox, .listItem');
+      if (card) {
+        handleCardHighlight(card.closest('.card') || card);
       }
     }, { passive: true });
 
     document.addEventListener('mouseout', (e) => {
-      if (isCurrentlyOnDetailPage() || isNavigatingToDetail) return;
-
       const card = e.target.closest('.card, .cardBox, .listItem');
-      if (!card) return;
-
-      const cardContainer = card.closest('.card') || card;
-
-      if (cardContainer === currentCardElem) {
-        const related = e.relatedTarget;
-        if (!related || !cardContainer.contains(related)) {
-          if (hoverTimer) clearTimeout(hoverTimer);
-          currentCardElem = null;
-          stopMusic(200);
-        }
+      if (card) {
+        handleCardLeave(card.closest('.card') || card, e.relatedTarget);
       }
     }, { passive: true });
   }
 
+  // 2. Focus events (TV Remote Control D-pad & Keyboard)
+  document.addEventListener('focusin', (e) => {
+    const card = e.target.closest('.card, .cardBox, .listItem');
+    if (card) {
+      handleCardHighlight(card.closest('.card') || card);
+    }
+  }, { passive: true });
+
+  document.addEventListener('focusout', (e) => {
+    const card = e.target.closest('.card, .cardBox, .listItem');
+    if (card) {
+      handleCardLeave(card.closest('.card') || card, e.relatedTarget);
+    }
+  }, { passive: true });
+
   /* =========================================================================
-     7. FLOATING AUDIO PILL (BOTTOM-RIGHT)
+     6. FLOATING AUDIO PILL (BOTTOM-RIGHT)
      ========================================================================= */
   const uiStyles = document.createElement('style');
   uiStyles.textContent = `

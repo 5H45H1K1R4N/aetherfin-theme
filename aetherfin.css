@@ -1,7 +1,7 @@
 ﻿/**
- * AetherFin — Zombie Theme & Local Audio Engine for Jellyfin 12
+ * AetherFin — Zombie Theme & Universal Audio Engine for Jellyfin 12
  * Visual Theme: Zombie Revived (MakD/zombie-release) - AMOLED Black & Minimalist UI
- * Audio Engine: AetherFin FX (Local Server Theme Audio & Continuous Detail Score)
+ * Audio Engine: AetherFin FX (Local Server Theme Audio for Web, Mobile Phone & TV)
  * Author: 5H45H1K1R4N
  * Repository: https://github.com/5H45H1K1R4N/aetherfin-theme
  */
@@ -12,7 +12,26 @@
 @import url("https://cdn.jsdelivr.net/gh/MakD/zombie-release@latest/zombie_revived.css");
 
 /* =========================================================================
-   2. CUSTOM MOVIES & TV SHOWS LIBRARY BANNERS
+   2. TV REMOTE D-PAD FOCUS HIGHLIGHTS & CARD PHYSICS
+   ========================================================================= */
+.card {
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1), 
+              outline 0.2s ease !important;
+}
+
+.card:focus,
+.card:focus-visible,
+.card:focus-within {
+  outline: 2.5px solid rgb(var(--accent, 0, 172, 111)) !important;
+  outline-offset: 3px !important;
+  transform: translateY(-4px) scale(1.03) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85), 0 0 20px rgba(0, 172, 111, 0.25) !important;
+  z-index: 10 !important;
+}
+
+/* =========================================================================
+   3. CUSTOM MOVIES & TV SHOWS LIBRARY BANNERS
    ========================================================================= */
 [data-id="f137a2dd21bbc1b99aa5c0f6bf02a805"] .cardImageContainer,
 [data-id="f137a2dd21bbc1b99aa5c0f6bf02a805"] .cardScalable {
@@ -33,7 +52,7 @@
 [data-id="a656b907eb3a73532e40e44b968d0225"] .cardImageContainer img { opacity: 0 !important; }
 
 /* =========================================================================
-   3. SLEEK FLOATING THEME AUDIO PILL
+   4. SLEEK FLOATING THEME AUDIO PILL
    ========================================================================= */
 #aetherfin-audio-pill {
   background: rgba(18, 18, 18, 0.92) !important;
