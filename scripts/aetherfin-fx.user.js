@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         AetherFin Suite — Universal Sound FX & Local Theme Music Engine
 // @namespace    https://jellyfin.org/
-// @version      14.0.0
-// @description  Upgraded tactile UI sound effects (higher volume, modern pop chime hover, mechanical clicks) and local server theme song playback engine across Web, Phone & TV.
+// @version      15.0.0
+// @description  Upgraded tactile UI sound effects (higher volume, modern pop chime hover, mechanical clicks), cinematic Hero Media Bar integration, and local server theme song playback engine across Web, Phone & TV.
 // @author       5H45H1K1R4N
 // @match        *://*/*
 // @grant        none
@@ -12,14 +12,25 @@
 (function () {
   'use strict';
 
-  if (window.__AETHERFIN_V14_LOADED__) return;
-  window.__AETHERFIN_V14_LOADED__ = true;
+  if (window.__AETHERFIN_V15_LOADED__) return;
+  window.__AETHERFIN_V15_LOADED__ = true;
 
-  console.log('%c[AetherFin FX v14]%c Upgraded Sound Effects & Local Audio Engine Active', 
+  console.log('%c[AetherFin FX v15]%c Hero Media Bar & Sound Suite Active', 
               'color: #00ac6f; font-weight: bold; font-size: 14px;', 'color: #ffffff; font-weight: bold;');
 
   const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
   const isTV = /Android TV|SmartTV|HbbTV|Tizen|WebOS|LargeScreen|CrKey/i.test(navigator.userAgent) || window.matchMedia('(display-mode: tv)').matches;
+
+  // Clean up legacy multi-theme elements if present in DOM
+  try {
+    const oldBtn = document.getElementById('aetherfin-floating-theme-btn');
+    if (oldBtn) oldBtn.remove();
+    const oldModal = document.getElementById('aetherfin-theme-modal');
+    if (oldModal) oldModal.remove();
+    const oldThemeLink = document.getElementById('aetherfin-active-theme-link');
+    if (oldThemeLink) oldThemeLink.remove();
+    localStorage.removeItem('aetherfin_active_theme');
+  } catch (e) {}
 
   // Automatically enable native theme song preferences in Jellyfin client storage
   try {
@@ -37,7 +48,43 @@
   } catch (e) {}
 
   /* =========================================================================
-     1. UPGRADED WEB AUDIO API UI SOUND EFFECTS (Crisper & Louder)
+     1. CINEMATIC HERO MEDIA BAR AUTO-LOADER
+     ========================================================================= */
+  (function initHeroMediaBar() {
+    if (window.__MEDIABAR_INITIALIZED__) return;
+    window.__MEDIABAR_INITIALIZED__ = true;
+
+    // 1. Google Fonts for Media Bar
+    if (!document.getElementById('aetherfin-mediabar-fonts')) {
+      const fonts = document.createElement('link');
+      fonts.id = 'aetherfin-mediabar-fonts';
+      fonts.rel = 'stylesheet';
+      fonts.href = 'https://fonts.googleapis.com/css2?family=Archivo+Narrow:ital,wght@0,400..700;1,400..700&family=IBM+Plex+Mono:wght@400;600&display=swap';
+      document.head.appendChild(fonts);
+    }
+
+    // 2. Base Media Bar CSS from Server
+    if (!document.getElementById('aetherfin-mediabar-css')) {
+      const css = document.createElement('link');
+      css.id = 'aetherfin-mediabar-css';
+      css.rel = 'stylesheet';
+      css.href = '/MediaBar/slideshowpure.css';
+      document.head.appendChild(css);
+    }
+
+    // 3. Media Bar Engine Script from Server
+    if (!document.getElementById('aetherfin-mediabar-js')) {
+      const script = document.createElement('script');
+      script.id = 'aetherfin-mediabar-js';
+      script.defer = true;
+      script.src = '/MediaBar/slideshowpure.js';
+      document.head.appendChild(script);
+      console.log('[AetherFin] Cinematic Hero Media Bar initialized from server.');
+    }
+  })();
+
+  /* =========================================================================
+     2. UPGRADED WEB AUDIO API UI SOUND EFFECTS (Crisper & Louder)
      ========================================================================= */
   let audioCtx = null;
   function getAudioContext() {
@@ -53,7 +100,7 @@
     return audioCtx;
   }
 
-  // Modern acoustic bubble/pop chime with increased volume (Audible on TV, Phone & Desktop)
+  // Modern acoustic bubble/pop chime (Audible on TV, Phone & Desktop)
   function playHoverSound() {
     if (isMuted) return;
     try {
@@ -61,7 +108,6 @@
       if (!ctx) return;
       const t = ctx.currentTime;
 
-      // Primary pop resonance
       const osc1 = ctx.createOscillator();
       const gain1 = ctx.createGain();
       osc1.type = 'sine';
@@ -74,7 +120,6 @@
       osc1.start(t);
       osc1.stop(t + 0.06);
 
-      // Upper crystal harmonic
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
       osc2.type = 'triangle';
@@ -88,7 +133,7 @@
     } catch (e) {}
   }
 
-  // Crisp mechanical tactile snap click with increased volume
+  // Crisp mechanical tactile snap click
   function playClickSound() {
     if (isMuted) return;
     try {
@@ -96,7 +141,6 @@
       if (!ctx) return;
       const t = ctx.currentTime;
 
-      // Tactile snap
       const osc1 = ctx.createOscillator();
       const gain1 = ctx.createGain();
       osc1.type = 'triangle';
@@ -109,7 +153,6 @@
       osc1.start(t);
       osc1.stop(t + 0.055);
 
-      // Warm body punch
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
       osc2.type = 'sine';
@@ -126,31 +169,28 @@
 
   // Bind mouse hover (Desktop)
   document.addEventListener('mouseover', (e) => {
-    if (e.target && e.target.closest('.card, .paper-icon-button-light, .button-flat, .navMenuOption')) {
+    if (e.target && e.target.closest('.card, .paper-icon-button-light, .button-flat, .navMenuOption, .action-btn')) {
       playHoverSound();
     }
   }, { passive: true });
 
   // Bind TV remote D-Pad & keyboard focus (TV & Keyboard)
   document.addEventListener('focusin', (e) => {
-    if (e.target && e.target.closest('.card, .paper-icon-button-light, .button-flat, .navMenuOption, .listItem')) {
+    if (e.target && e.target.closest('.card, .paper-icon-button-light, .button-flat, .navMenuOption, .listItem, .action-btn')) {
       playHoverSound();
     }
   }, { passive: true });
 
   // Bind click (Mouse, Touch & Remote OK)
   document.addEventListener('click', (e) => {
-    if (e.target && e.target.closest('.card, button, .button-flat, .paper-icon-button-light, a')) {
+    if (e.target && e.target.closest('.card, button, .button-flat, .paper-icon-button-light, a, .action-btn')) {
       playClickSound();
     }
   }, { passive: true });
 
   /* =========================================================================
-     2. LOCAL SERVER THEME SONG DATABASE (Direct Local /Audio Stream)
-     =========================================================================
-     These stream directly from the local Jellyfin server without requiring auth
-     or external internet access!
-  */
+     3. LOCAL SERVER THEME SONG DATABASE (Direct Local /Audio Stream)
+     ========================================================================= */
   const SERVER_THEME_MAP = [
     { keys: ["3 idiots", "three idiots"], streamUrl: "/Audio/6ba6543f2cbe37cce0d0af6fe3908bab/stream.mp3", title: "3 Idiots" },
     { keys: ["alice in borderland", "borderland"], streamUrl: "/Audio/6b76cd76c93918931e119b56e0e3faf1/stream.mp3", title: "Alice in Borderland" },
@@ -186,7 +226,7 @@
   ];
 
   /* =========================================================================
-     3. UNIVERSAL THEME MUSIC AUDIO PIPELINE
+     4. UNIVERSAL THEME MUSIC AUDIO PIPELINE
      ========================================================================= */
   let globalAudio = document.getElementById('aetherfin-global-audio');
   if (!globalAudio) {
@@ -204,7 +244,6 @@
   let fadeTimer = null;
   let audioUnlocked = false;
 
-  // Unlocks audio on Desktop, Touch (Mobile) and Remote Control (TV)
   function unlockAudioEngine() {
     if (audioUnlocked) return;
     try {
@@ -281,16 +320,14 @@
     }, stepMs);
   }
 
-  // Target volume increased to 0.35 for rich, clear sound
   function playTheme(theme, targetVolume = 0.35) {
     if (isMuted || !theme) return;
     if (activeTheme && activeTheme.url === theme.url && !globalAudio.paused) {
-      return; // Already playing this track
+      return;
     }
 
     if (fadeTimer) clearInterval(fadeTimer);
 
-    // Don't play theme audio if a video is currently playing in Jellyfin
     const isVideoPlaying = document.querySelector('video:not(.paused)') && !document.querySelector('video').paused;
     if (isVideoPlaying) return;
 
@@ -322,7 +359,7 @@
             }
           }, 35);
         }).catch((err) => {
-          console.log("[AetherFin] Autoplay waiting for user gesture:", err.message);
+          console.log("[AetherFin] Autoplay waiting for gesture:", err.message);
           const resumeOnGesture = () => {
             if (activeTheme && activeTheme.url === theme.url && globalAudio.paused) {
               globalAudio.play().catch(() => {});
@@ -342,25 +379,22 @@
   }
 
   /* =========================================================================
-     4. THEME RESOLVER (Local Server Map + Dynamic ApiClient Fallback)
+     5. THEME RESOLVER (Local Server Map + Dynamic ApiClient Fallback)
      ========================================================================= */
   const themeCache = {};
 
   function resolveThemeForItem(itemId, title, callback) {
-    // 1. Instant check against local server title map (0 latency, 0 auth)
     const localTheme = findThemeForText(title);
     if (localTheme) {
       callback(localTheme);
       return;
     }
 
-    // 2. Check in-memory cache
     if (itemId && themeCache[itemId] !== undefined) {
       callback(themeCache[itemId]);
       return;
     }
 
-    // 3. Dynamic query using window.ApiClient (authenticated)
     if (window.ApiClient && itemId) {
       window.ApiClient.getJSON(window.ApiClient.getUrl('Items/' + itemId + '/ThemeSongs'))
         .then(data => {
@@ -387,7 +421,7 @@
   }
 
   /* =========================================================================
-     5. DETAIL PAGE NAVIGATION & CARD INTERACTION
+     6. DETAIL PAGE NAVIGATION & CARD INTERACTION
      ========================================================================= */
   let isNavigatingToDetail = false;
 
@@ -419,9 +453,8 @@
     return card.getAttribute('data-id') || card.getAttribute('data-itemid') || null;
   }
 
-  // Intercept taps & clicks (Mouse & Touch)
   function onCardClicked(target) {
-    const card = target.closest('.card, .cardBox, .listItem, a[data-itemid], [data-id]');
+    const card = target.closest('.card, .cardBox, .listItem, a[data-itemid], [data-id], .slide');
     if (card) {
       const cardContainer = card.closest('.card') || card;
       const title = extractCardTitle(cardContainer);
@@ -436,7 +469,7 @@
       });
     }
 
-    if (target.closest('.btnPlay, [data-action="play"], button[data-id="play"], .videoPlayButton')) {
+    if (target.closest('.btnPlay, [data-action="play"], button[data-id="play"], .videoPlayButton, .action-btn.play')) {
       stopMusic(300);
     }
   }
@@ -444,7 +477,6 @@
   document.addEventListener('click', (e) => { onCardClicked(e.target); }, true);
   document.addEventListener('touchend', (e) => { if (e.target) onCardClicked(e.target); }, { passive: true });
 
-  // TV Remote OK / Enter key
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === 'Select' || e.keyCode === 13) {
       const activeEl = document.activeElement;
@@ -454,7 +486,6 @@
     }
   }, { passive: true });
 
-  // Detail page enter / exit observer
   let lastDetailPageState = false;
   function checkRouteState() {
     const onDetail = isCurrentlyOnDetailPage();
@@ -489,7 +520,7 @@
   routeObserver.observe(document.body, { childList: true, subtree: true });
 
   /* =========================================================================
-     6. RESPONSIVE HOVER (DESKTOP) & FOCUS DWELL (TV REMOTE D-PAD)
+     7. RESPONSIVE HOVER (DESKTOP) & FOCUS DWELL (TV REMOTE D-PAD)
      ========================================================================= */
   let dwellTimer = null;
   let currentActiveCard = null;
@@ -517,7 +548,7 @@
             }
           });
         }
-      }, 400); // 400ms intentional dwell
+      }, 400);
     }
   }
 
@@ -534,7 +565,6 @@
     }
   }
 
-  // 1. Mouse hover (Desktop)
   if (!isMobile && !isTV) {
     document.addEventListener('mouseover', (e) => {
       const card = e.target.closest('.card, .cardBox, .listItem');
@@ -551,7 +581,6 @@
     }, { passive: true });
   }
 
-  // 2. Focus events (TV Remote D-Pad & Keyboard)
   document.addEventListener('focusin', (e) => {
     const card = e.target.closest('.card, .cardBox, .listItem');
     if (card) {
@@ -567,7 +596,7 @@
   }, { passive: true });
 
   /* =========================================================================
-     7. FLOATING AUDIO PILL (BOTTOM-RIGHT)
+     8. FLOATING AUDIO PILL (BOTTOM-RIGHT)
      ========================================================================= */
   const uiStyles = document.createElement('style');
   uiStyles.textContent = `
