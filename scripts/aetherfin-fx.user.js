@@ -227,6 +227,7 @@
 
   const THEME_DATABASE = [
     { keys: ["bahubali", "baahubali", "the beginning", "the epic"], file: "bahubali.mp3", title: "Bāhubali" },
+    { keys: ["scam 1992", "harshad mehta", "scam the harshad mehta story"], file: "scam-1992.mp3", title: "Scam 1992: The Harshad Mehta Story" },
     { keys: ["interstellar"], file: "interstellar.mp3", title: "Interstellar" },
     { keys: ["3 idiots", "three idiots"], file: "3-idiots.mp3", title: "3 Idiots" },
     { keys: ["toxic"], file: "toxic.mp3", title: "Toxic" },
