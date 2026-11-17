@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         AetherFin FX Engine — Next-Gen Audio, Mobile & Detail Continuous Playback
+// @name         AetherFin Suite — Theme Switcher, Audio FX & Mobile Engine
 // @namespace    https://jellyfin.org/
-// @version      5.0.0
-// @description  Cinematic ambient audio feedback for Jellyfin. Continuous detail page score, mobile touch support, and complete library theme music.
+// @version      6.0.0
+// @description  Interactive Theme Switcher (NeutralFin, Ultrachromic & Cyber-OLED), full library theme music, and mobile support.
 // @author       5H45H1K1R4N
 // @match        *://*/*
 // @grant        none
@@ -12,19 +12,284 @@
 (function () {
   'use strict';
 
-  // Prevent multiple executions while allowing hot updates
-  if (window.__AETHERFIN_V5_LOADED__) return;
-  window.__AETHERFIN_V5_LOADED__ = true;
+  if (window.__AETHERFIN_V6_LOADED__) return;
+  window.__AETHERFIN_V6_LOADED__ = true;
 
-  console.log('%c[AetherFin FX v5]%c Cinematic Audio & Continuous Mobile Suite Active', 
+  console.log('%c[AetherFin Suite v6]%c Theme Switcher & Audio FX Active', 
               'color: #e50914; font-weight: bold; font-size: 13px;', 'color: #06b6d4; font-weight: bold;');
 
   /* =========================================================================
-     1. HIGH-SPEED CDN THEME DATABASE (Every title in library)
+     1. THEME SWITCHER ENGINE (NeutralFin, Ultrachromic & Cyber-OLED)
+     ========================================================================= */
+  const THEME_OPTIONS = [
+    {
+      id: "neutralfin",
+      name: "NeutralFin",
+      author: "KartoffelChipss",
+      desc: "Sleek black & neutral grey with modern Lucide vector icons.",
+      accent: "#71717a",
+      file: "neutralfin.css"
+    },
+    {
+      id: "ultrachromic-kaleido",
+      name: "Ultrachromic (Kaleido)",
+      author: "CTalvio",
+      desc: "Vibrant chromatic gradients, glowing backdrops & glassy UI.",
+      accent: "#6366f1",
+      file: "ultrachromic-kaleido.css"
+    },
+    {
+      id: "ultrachromic-nova",
+      name: "Ultrachromic (Nova)",
+      author: "CTalvio",
+      desc: "Modern chromatic dark theme with saturated ambient color accents.",
+      accent: "#06b6d4",
+      file: "ultrachromic-nova.css"
+    },
+    {
+      id: "ultrachromic-mono",
+      name: "Ultrachromic (Mono)",
+      author: "CTalvio",
+      desc: "High-contrast clean monochrome minimalism.",
+      accent: "#e4e4e7",
+      file: "ultrachromic-mono.css"
+    },
+    {
+      id: "cyber-oled",
+      name: "AetherFin Cyber-OLED",
+      author: "5H45H1K1R4N",
+      desc: "Deep AMOLED pure black with radiant crimson neon accents.",
+      accent: "#e50914",
+      file: "cyber-oled.css"
+    }
+  ];
+
+  const THEMES_BASE_URL = "https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/themes";
+
+  function getActiveThemeId() {
+    return localStorage.getItem('aetherfin_active_theme') || 'neutralfin';
+  }
+
+  function applyTheme(themeId) {
+    localStorage.setItem('aetherfin_active_theme', themeId);
+    const theme = THEME_OPTIONS.find(t => t.id === themeId) || THEME_OPTIONS[0];
+
+    let linkEl = document.getElementById('aetherfin-active-theme-link');
+    if (!linkEl) {
+      linkEl = document.createElement('link');
+      linkEl.id = 'aetherfin-active-theme-link';
+      linkEl.rel = 'stylesheet';
+      document.head.appendChild(linkEl);
+    }
+    linkEl.href = `${THEMES_BASE_URL}/${theme.file}?v=${Date.now()}`;
+    console.log(`[AetherFin] Active theme switched to: ${theme.name}`);
+  }
+
+  // Apply saved theme immediately
+  applyTheme(getActiveThemeId());
+
+  // Theme Switcher Modal UI
+  function openThemeModal() {
+    let modal = document.getElementById('aetherfin-theme-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+      renderThemeCards();
+      return;
+    }
+
+    modal = document.createElement('div');
+    modal.id = 'aetherfin-theme-modal';
+    modal.style.cssText = `
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      animation: aetherFadeIn 0.25s ease-out;
+    `;
+
+    modal.innerHTML = `
+      <div style="
+        background: rgba(24, 24, 27, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        width: 100%;
+        max-width: 580px;
+        max-height: 85vh;
+        overflow-y: auto;
+        padding: 28px;
+        color: #f4f4f5;
+        position: relative;
+      ">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <div>
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+              <span>🎨</span> Theme & Appearance
+            </h2>
+            <p style="margin: 4px 0 0; font-size: 13px; color: #a1a1aa;">
+              Personalize your Jellyfin look. Changes apply instantly.
+            </p>
+          </div>
+          <button id="aetherfin-close-modal" style="
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 9999px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f4f4f5;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            transition: all 0.2s ease;
+          ">✕</button>
+        </div>
+
+        <div id="aetherfin-theme-grid" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;"></div>
+
+        <div style="display: flex; justify-content: flex-end;">
+          <button id="aetherfin-done-btn" style="
+            background: #e50914;
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(229, 9, 20, 0.4);
+            transition: transform 0.2s ease;
+          ">Done</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.querySelector('#aetherfin-close-modal').addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+    modal.querySelector('#aetherfin-done-btn').addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.style.display = 'none';
+    });
+
+    renderThemeCards();
+  }
+
+  function renderThemeCards() {
+    const grid = document.getElementById('aetherfin-theme-grid');
+    if (!grid) return;
+    const currentId = getActiveThemeId();
+
+    grid.innerHTML = THEME_OPTIONS.map(theme => {
+      const isSelected = theme.id === currentId;
+      return `
+        <div class="aether-theme-card" data-id="${theme.id}" style="
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 14px 16px;
+          border-radius: 14px;
+          background: ${isSelected ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.03)'};
+          border: 1px solid ${isSelected ? theme.accent : 'rgba(255, 255, 255, 0.08)'};
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          box-shadow: ${isSelected ? `0 0 16px ${theme.accent}33` : 'none'};
+        ">
+          <div style="
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: ${theme.accent};
+            box-shadow: 0 4px 12px ${theme.accent}66;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+          ">${isSelected ? '✓' : ''}</div>
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-weight: 600; font-size: 15px;">${theme.name}</span>
+              <span style="font-size: 11px; color: #a1a1aa; background: rgba(255, 255, 255, 0.06); padding: 2px 6px; border-radius: 4px;">by ${theme.author}</span>
+            </div>
+            <div style="font-size: 12px; color: #a1a1aa; margin-top: 2px;">${theme.desc}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    grid.querySelectorAll('.aether-theme-card').forEach(card => {
+      card.addEventListener('click', () => {
+        playHapticTick();
+        const id = card.getAttribute('data-id');
+        applyTheme(id);
+        renderThemeCards();
+      });
+    });
+  }
+
+  // Inject Theme Switcher Button into Top Navigation Bar
+  function injectTopBarButton() {
+    if (document.getElementById('aetherfin-theme-btn')) return;
+
+    const targetContainer = document.querySelector('.skinHeader-right, .headerRight, .headerTop');
+    if (!targetContainer) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'aetherfin-theme-btn';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Change Theme');
+    btn.title = 'Change Theme & Appearance';
+    btn.style.cssText = `
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+      padding: 6px 14px;
+      margin: 0 6px;
+      color: #f4f4f5;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      vertical-align: middle;
+    `;
+    btn.innerHTML = `<span>🎨</span><span class="aether-theme-label">Theme</span>`;
+
+    btn.addEventListener('click', () => {
+      playHapticTick();
+      openThemeModal();
+    });
+
+    targetContainer.insertBefore(btn, targetContainer.firstChild);
+  }
+
+  setInterval(injectTopBarButton, 1000);
+
+  /* =========================================================================
+     2. AUDIO ENGINE & COMPLETE LIBRARY THEME DATABASE (33 TITLES)
      ========================================================================= */
   const CDN_BASE = "https://cdn.jsdelivr.net/gh/5H45H1K1R4N/aetherfin-theme@main/audio/themes";
 
-  // Keyword / normalized title mappings
   const THEME_MAP = [
     { keys: ["interstellar"], file: "interstellar.mp3", title: "Interstellar" },
     { keys: ["3 idiots", "three idiots"], file: "3-idiots.mp3", title: "3 Idiots" },
@@ -61,18 +326,13 @@
     { keys: ["visionquest", "vision quest"], file: "vision-quest.mp3", title: "VisionQuest" }
   ];
 
-  /* =========================================================================
-     2. AUDIO ENGINE (CROSS-PLATFORM: DESKTOP & MOBILE SAFARI/CHROME/WEBVIEW)
-     ========================================================================= */
   let audioCtx = null;
   let isMuted = false;
 
   function getAudioCtx() {
     if (!audioCtx) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (AudioContext) {
-        audioCtx = new AudioContext();
-      }
+      if (AudioContext) audioCtx = new AudioContext();
     }
     if (audioCtx && audioCtx.state === 'suspended') {
       audioCtx.resume();
@@ -80,13 +340,9 @@
     return audioCtx;
   }
 
-  // Mobile & Desktop Hardware Audio Unlock
   function unlockAudio() {
     const ctx = getAudioCtx();
-    if (ctx && ctx.state === 'suspended') {
-      ctx.resume();
-    }
-    // Also play 1 sample of silence to unlock iOS Safari & Android WebViews
+    if (ctx && ctx.state === 'suspended') ctx.resume();
     try {
       const buffer = ctx.createBuffer(1, 1, 22050);
       const source = ctx.createBufferSource();
@@ -95,22 +351,20 @@
       source.start(0);
     } catch (e) {}
     
-    document.removeEventListener('click', unlockAudio);
-    document.removeEventListener('touchstart', unlockAudio);
-    document.removeEventListener('pointerdown', unlockAudio);
-    document.removeEventListener('keydown', unlockAudio);
+    ['click', 'touchstart', 'touchend', 'pointerdown', 'keydown'].forEach(evt => {
+      document.removeEventListener(evt, unlockAudio);
+    });
   }
 
   ['click', 'touchstart', 'touchend', 'pointerdown', 'keydown'].forEach(evt => {
     document.addEventListener(evt, unlockAudio, { passive: true, once: false });
   });
 
-  // UI Haptic sounds
   let lastHoverTick = 0;
   function playHapticTick() {
     if (isMuted) return;
     const now = performance.now();
-    if (now - lastHoverTick < 80) return;
+    if (now - lastHoverTick < 70) return;
     lastHoverTick = now;
 
     const ctx = getAudioCtx();
@@ -119,8 +373,8 @@
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(120, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.025);
+      osc.frequency.setValueAtTime(130, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(55, ctx.currentTime + 0.025);
       gain.gain.setValueAtTime(0.03, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.025);
       osc.connect(gain);
@@ -130,9 +384,6 @@
     } catch (e) {}
   }
 
-  /* =========================================================================
-     3. THEME MUSIC PLAYBACK CONTROLLER
-     ========================================================================= */
   let currentAudio = null;
   let currentGain = null;
   let currentCardElem = null;
@@ -151,8 +402,7 @@
     const norm = normalize(text);
     for (const item of THEME_MAP) {
       for (const k of item.keys) {
-        const normKey = normalize(k);
-        if (norm.includes(normKey)) {
+        if (norm.includes(normalize(k))) {
           return {
             title: item.title,
             url: `${CDN_BASE}/${item.file}`
@@ -165,7 +415,6 @@
 
   function extractCardTitle(card) {
     if (!card) return '';
-    // Check multiple selectors used by Jellyfin 10.9 - 12+
     const selectors = [
       '.cardText-first',
       '.cardText',
@@ -177,9 +426,7 @@
     ];
     for (const sel of selectors) {
       const el = card.querySelector(sel);
-      if (el && el.textContent.trim()) {
-        return el.textContent.trim();
-      }
+      if (el && el.textContent.trim()) return el.textContent.trim();
     }
     return card.getAttribute('data-title') || 
            card.getAttribute('aria-label') || 
@@ -218,14 +465,11 @@
   function startThemeMusic(theme, isDetailPage = false) {
     if (isMuted) return;
     if (currentAudio && currentMatchedTheme && currentMatchedTheme.url === theme.url) {
-      // Already playing this exact theme! Keep playing!
       return;
     }
 
-    // Stop previous track smoothly
     stopThemeMusic(200);
 
-    // Check if video is playing in Jellyfin
     const isVideoPlaying = document.querySelector('video:not(.paused)') && !document.querySelector('video').paused;
     if (isVideoPlaying) return;
 
@@ -246,7 +490,6 @@
           const source = ctx.createMediaElementSource(audio);
           const filter = ctx.createBiquadFilter();
           filter.type = 'lowpass';
-          // Detail page has warmer 3600Hz, hover has 3200Hz
           filter.frequency.setValueAtTime(isDetailPage ? 3600 : 3200, ctx.currentTime);
 
           gain = ctx.createGain();
@@ -259,7 +502,6 @@
           gain.connect(ctx.destination);
           currentGain = gain;
         } catch (e) {
-          // Fallback if MediaElementSource is restricted by browser
           audio.volume = isDetailPage ? 0.18 : 0.16;
         }
       } else {
@@ -268,20 +510,13 @@
 
       currentAudio = audio;
       const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(err => {
-          // Autoplay policy prevented playback until user clicks
-        });
-      }
-    } catch (e) {
-      console.warn('[AetherFin] Audio start error:', e);
-    }
+      if (playPromise !== undefined) playPromise.catch(() => {});
+    } catch (e) {}
   }
 
   /* =========================================================================
-     4. SEAMLESS DETAIL PAGE CONTINUOUS PLAYBACK (User clicked hovered card)
+     3. CONTINUOUS DETAIL PLAYBACK & ROUTING
      ========================================================================= */
-  // Intercept click on any media card
   document.addEventListener('click', (e) => {
     const card = e.target.closest('.card, .cardBox, .listItem');
     if (card) {
@@ -290,29 +525,22 @@
       const theme = findThemeForText(rawTitle);
       if (theme) {
         isNavigatingToDetail = true;
-        // Keep playing into the detail page!
         if (!currentAudio || (currentMatchedTheme && currentMatchedTheme.url !== theme.url)) {
           startThemeMusic(theme, true);
         }
-        // Reset navigation flag after transition completes
-        setTimeout(() => {
-          isNavigatingToDetail = false;
-        }, 3000);
+        setTimeout(() => { isNavigatingToDetail = false; }, 3000);
       }
     }
 
-    // Stop theme if user clicks "Play" on a movie
     if (e.target.closest('.btnPlay, [data-action="play"], button[data-id="play"], .videoPlayButton')) {
       stopThemeMusic(400);
     }
   }, true);
 
-  // Monitor SPA Page Changes (Jellyfin router)
   function checkDetailPage() {
     const detailContainer = document.querySelector('.itemDetailPage, .detailPage, .detailRibbon, [data-role="page"].itemDetailPage');
     if (detailContainer && !detailContainer.classList.contains('hide')) {
       isDetailPageActive = true;
-      // Get title of the movie on the detail page
       const titleEl = detailContainer.querySelector('.itemName, .parentName, h1');
       const detailTitle = titleEl ? titleEl.textContent.trim() : '';
       const theme = findThemeForText(detailTitle);
@@ -324,26 +552,24 @@
       }
     } else {
       if (isDetailPageActive && !isNavigatingToDetail) {
-        // User left detail page, stop background playback
         isDetailPageActive = false;
         stopThemeMusic(400);
       }
     }
   }
 
-  // Observe route / DOM changes
   const observer = new MutationObserver(() => {
     checkDetailPage();
+    injectTopBarButton();
   });
   observer.observe(document.body, { childList: true, subtree: true });
   window.addEventListener('popstate', checkDetailPage);
   window.addEventListener('hashchange', checkDetailPage);
 
   /* =========================================================================
-     5. HOVER PLAYBACK WITH 450ms INTENTIONAL DWELL (Desktop Mouse)
+     4. HOVER PLAYBACK & MOBILE TOUCH
      ========================================================================= */
   document.addEventListener('mouseover', (e) => {
-    // If currently on a detail page, don't trigger hover events
     if (isDetailPageActive || isNavigatingToDetail) return;
 
     const card = e.target.closest('.card, .cardBox, .listItem');
@@ -361,7 +587,7 @@
             startThemeMusic(theme, false);
           }
         }
-      }, 450); // 450ms dwell to filter accidental brush-overs
+      }, 450);
     }
   }, { passive: true });
 
@@ -374,12 +600,11 @@
       if (!related || !card.contains(related)) {
         if (hoverTimer) clearTimeout(hoverTimer);
         currentCardElem = null;
-        stopThemeMusic(250); // Instant clean stop
+        stopThemeMusic(250);
       }
     }
   }, { passive: true });
 
-  // Mobile Touch Support: Tap and hold (400ms) to preview theme without clicking
   let touchTimer = null;
   document.addEventListener('touchstart', (e) => {
     const card = e.target.closest('.card, .cardBox, .listItem');
@@ -400,7 +625,7 @@
   }, { passive: true });
 
   /* =========================================================================
-     6. SLEEK FLOATING THEME PILL & MUTE TOGGLE
+     5. FLOATING CONTROLLER PILL (WITH QUICK THEME & MUTE)
      ========================================================================= */
   let pillElem = null;
   function updateFloatingPill(title) {
@@ -408,11 +633,12 @@
       pillElem = document.createElement('div');
       pillElem.id = 'aetherfin-audio-pill';
       pillElem.innerHTML = `
-        <span class="aether-icon">🎵</span>
+        <span class="aether-icon" title="Toggle Mute">🎵</span>
         <span class="aether-title"></span>
         <span class="aether-bars">
           <span></span><span></span><span></span>
         </span>
+        <span class="aether-theme-trigger" title="Change Theme" style="margin-left: 8px; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 8px; font-size: 14px;">🎨</span>
       `;
       pillElem.style.cssText = `
         position: fixed;
@@ -422,8 +648,9 @@
         display: none;
         align-items: center;
         gap: 8px;
-        background: rgba(15, 23, 42, 0.85);
-        backdrop-filter: blur(16px);
+        background: rgba(18, 18, 18, 0.88);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.15);
         padding: 8px 16px;
         border-radius: 9999px;
@@ -431,14 +658,12 @@
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         font-size: 13px;
         font-weight: 600;
-        letter-spacing: 0.3px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(229, 9, 20, 0.3);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 255, 255, 0.05);
         cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         user-select: none;
+        transition: all 0.25s ease;
       `;
 
-      // Visual equalizer bars animation style
       const style = document.createElement('style');
       style.textContent = `
         #aetherfin-audio-pill .aether-bars {
@@ -460,10 +685,20 @@
           0% { height: 3px; }
           100% { height: 12px; }
         }
+        @keyframes aetherFadeIn {
+          from { opacity: 0; transform: scale(0.96); }
+          to { opacity: 1; transform: scale(1); }
+        }
       `;
       document.head.appendChild(style);
 
-      pillElem.addEventListener('click', () => {
+      pillElem.querySelector('.aether-theme-trigger').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openThemeModal();
+      });
+
+      pillElem.addEventListener('click', (e) => {
+        if (e.target.closest('.aether-theme-trigger')) return;
         isMuted = !isMuted;
         if (isMuted) {
           stopThemeMusic(150);

@@ -1,0 +1,17 @@
+/**
+ * AetherFin — Ultrachromic (Novachromic Preset)
+ * Author: CTalvio
+ */
+@import url('https://cdn.jsdelivr.net/gh/CTalvio/Ultrachromic/presets/novachromic_preset.css');
+@import url('https://cdn.jsdelivr.net/gh/KartoffelChipss/Jellyfin-Lucide@main/theme/jellyfin-lucide.css');
+
+.card {
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-5px) scale(1.028) !important;
+  z-index: 10 !important;
+}

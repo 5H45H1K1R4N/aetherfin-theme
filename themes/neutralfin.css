@@ -1,0 +1,30 @@
+/**
+ * AetherFin — NeutralFin Theme
+ * Powered by KartoffelChipss/NeutralFin + Lucide Icons
+ */
+@import url('https://cdn.jsdelivr.net/gh/KartoffelChipss/NeutralFin@latest/theme/neutralfin-minified.css');
+@import url('https://cdn.jsdelivr.net/gh/KartoffelChipss/Jellyfin-Lucide@main/theme/jellyfin-lucide.css');
+
+.card {
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), 
+              border-color 0.28s ease !important;
+  border-radius: var(--largeRadius, 12px) !important;
+}
+
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-5px) scale(1.028) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), 0 0 20px rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  z-index: 10 !important;
+}
+
+.cardImageContainer {
+  border-radius: var(--largeRadius, 12px) !important;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.card:hover .cardImageContainer {
+  transform: scale(1.015) !important;
+}

@@ -1,23 +1,19 @@
 ﻿/**
  * AetherFin — Next-Gen Jellyfin Suite
- * Visual Engine: NeutralFin (KartoffelChipss) + Lucide Icons
- * Audio Engine: AetherFin FX v5 (Continuous Detail Score, Mobile Touch & Full Library Themes)
+ * Visual Engines: NeutralFin (KartoffelChipss) & Ultrachromic (CTalvio) with In-App Switcher
+ * Audio Engine: AetherFin FX (Continuous Detail Score, Mobile Touch & Full Library Themes)
  * Author: 5H45H1K1R4N
  * Repository: https://github.com/5H45H1K1R4N/aetherfin-theme
  */
 
 /* =========================================================================
-   1. CORE THEME: NeutralFin (Sleek Black & Neutral Grey by KartoffelChipss)
+   1. DEFAULT THEME: NeutralFin (Sleek Black & Neutral Grey + Lucide Icons)
    ========================================================================= */
 @import url('https://cdn.jsdelivr.net/gh/KartoffelChipss/NeutralFin@latest/theme/neutralfin-minified.css');
-
-/* =========================================================================
-   2. MODERN ICONS: Jellyfin Lucide Icons (Clean Minimalist Vectors)
-   ========================================================================= */
 @import url('https://cdn.jsdelivr.net/gh/KartoffelChipss/Jellyfin-Lucide@main/theme/jellyfin-lucide.css');
 
 /* =========================================================================
-   3. AETHERFIN TACTILE CARD ENHANCEMENTS
+   2. TACTILE CARD ELEVATION & SPRING PHYSICS
    ========================================================================= */
 .card {
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), 
@@ -44,7 +40,7 @@
 }
 
 /* =========================================================================
-   4. CUSTOM MOVIES & TV SHOWS LIBRARY BANNERS
+   3. CUSTOM MOVIES & TV SHOWS LIBRARY BANNERS
    ========================================================================= */
 [data-id="f137a2dd21bbc1b99aa5c0f6bf02a805"] .cardImageContainer,
 [data-id="f137a2dd21bbc1b99aa5c0f6bf02a805"] .cardScalable {
@@ -65,7 +61,7 @@
 [data-id="a656b907eb3a73532e40e44b968d0225"] .cardImageContainer img { opacity: 0 !important; }
 
 /* =========================================================================
-   5. SLEEK FLOATING THEME AUDIO PILL (NeutralFin Aesthetic)
+   4. SLEEK FLOATING THEME AUDIO PILL & THEME BUTTON
    ========================================================================= */
 #aetherfin-audio-pill {
   background: rgba(19, 19, 19, 0.88) !important;
