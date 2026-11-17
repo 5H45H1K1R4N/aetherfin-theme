@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         AetherFin Suite — Universal Sound FX & Theme Music Engine (Web, Phone & TV)
+// @name         AetherFin Suite — Universal Sound FX & Local Theme Music Engine
 // @namespace    https://jellyfin.org/
-// @version      13.0.0
-// @description  Bespoke Web Audio API UI sound effects (PS5 haptic hover/focus ticks, mechanical clicks, celebration fanfare) and local server theme song playback engine with full Desktop, Mobile Touch, and TV Remote D-pad support for Jellyfin.
+// @version      14.0.0
+// @description  Upgraded tactile UI sound effects (higher volume, modern pop chime hover, mechanical clicks) and local server theme song playback engine across Web, Phone & TV.
 // @author       5H45H1K1R4N
 // @match        *://*/*
 // @grant        none
@@ -12,27 +12,16 @@
 (function () {
   'use strict';
 
-  if (window.__AETHERFIN_V13_LOADED__) return;
-  window.__AETHERFIN_V13_LOADED__ = true;
+  if (window.__AETHERFIN_V14_LOADED__) return;
+  window.__AETHERFIN_V14_LOADED__ = true;
 
-  console.log('%c[AetherFin FX v13]%c Universal Web, Phone & TV Engine Active', 
+  console.log('%c[AetherFin FX v14]%c Upgraded Sound Effects & Local Audio Engine Active', 
               'color: #00ac6f; font-weight: bold; font-size: 14px;', 'color: #ffffff; font-weight: bold;');
 
   const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
   const isTV = /Android TV|SmartTV|HbbTV|Tizen|WebOS|LargeScreen|CrKey/i.test(navigator.userAgent) || window.matchMedia('(display-mode: tv)').matches;
 
-  // Clean up legacy multi-theme elements if present in DOM
-  try {
-    const oldBtn = document.getElementById('aetherfin-floating-theme-btn');
-    if (oldBtn) oldBtn.remove();
-    const oldModal = document.getElementById('aetherfin-theme-modal');
-    if (oldModal) oldModal.remove();
-    const oldThemeLink = document.getElementById('aetherfin-active-theme-link');
-    if (oldThemeLink) oldThemeLink.remove();
-    localStorage.removeItem('aetherfin_active_theme');
-  } catch (e) {}
-
-  // Automatically enable native theme song preferences in Jellyfin storage
+  // Automatically enable native theme song preferences in Jellyfin client storage
   try {
     localStorage.setItem('enableThemeSongs', 'true');
     localStorage.setItem('enableBackdrops', 'true');
@@ -48,7 +37,7 @@
   } catch (e) {}
 
   /* =========================================================================
-     1. SYNTHESIZED WEB AUDIO API SOUND EFFECTS (0 Audio Files Needed)
+     1. UPGRADED WEB AUDIO API UI SOUND EFFECTS (Crisper & Louder)
      ========================================================================= */
   let audioCtx = null;
   function getAudioContext() {
@@ -64,69 +53,92 @@
     return audioCtx;
   }
 
-  // Play subtle PS5-style tactile hover/focus tick (140Hz sine burst)
-  function playHoverTick() {
+  // Modern acoustic bubble/pop chime with increased volume (Audible on TV, Phone & Desktop)
+  function playHoverSound() {
     if (isMuted) return;
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+      const t = ctx.currentTime;
 
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(140, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(70, ctx.currentTime + 0.04);
+      // Primary pop resonance
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(520, t);
+      osc1.frequency.exponentialRampToValueAtTime(700, t + 0.04);
+      gain1.gain.setValueAtTime(0.14, t);
+      gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.055);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(t);
+      osc1.stop(t + 0.06);
 
-      gain.gain.setValueAtTime(0.04, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start();
-      osc.stop(ctx.currentTime + 0.045);
+      // Upper crystal harmonic
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(1040, t);
+      gain2.gain.setValueAtTime(0.07, t);
+      gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.035);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(t);
+      osc2.stop(t + 0.04);
     } catch (e) {}
   }
 
-  // Play crisp Apple TV-style mechanical click sound
+  // Crisp mechanical tactile snap click with increased volume
   function playClickSound() {
     if (isMuted) return;
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+      const t = ctx.currentTime;
 
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(320, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.035);
+      // Tactile snap
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'triangle';
+      osc1.frequency.setValueAtTime(840, t);
+      osc1.frequency.exponentialRampToValueAtTime(180, t + 0.045);
+      gain1.gain.setValueAtTime(0.20, t);
+      gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(t);
+      osc1.stop(t + 0.055);
 
-      gain.gain.setValueAtTime(0.08, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.035);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start();
-      osc.stop(ctx.currentTime + 0.04);
+      // Warm body punch
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(220, t);
+      osc2.frequency.exponentialRampToValueAtTime(80, t + 0.04);
+      gain2.gain.setValueAtTime(0.12, t);
+      gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(t);
+      osc2.stop(t + 0.05);
     } catch (e) {}
   }
 
-  // Bind UI mouse hover sound effects (Desktop)
+  // Bind mouse hover (Desktop)
   document.addEventListener('mouseover', (e) => {
     if (e.target && e.target.closest('.card, .paper-icon-button-light, .button-flat, .navMenuOption')) {
-      playHoverTick();
+      playHoverSound();
     }
   }, { passive: true });
 
-  // Bind UI focus sound effects (TV D-Pad & Keyboard navigation)
+  // Bind TV remote D-Pad & keyboard focus (TV & Keyboard)
   document.addEventListener('focusin', (e) => {
     if (e.target && e.target.closest('.card, .paper-icon-button-light, .button-flat, .navMenuOption, .listItem')) {
-      playHoverTick();
+      playHoverSound();
     }
   }, { passive: true });
 
-  // Bind UI click sound effects (Mouse, Touch & Remote Enter)
+  // Bind click (Mouse, Touch & Remote OK)
   document.addEventListener('click', (e) => {
     if (e.target && e.target.closest('.card, button, .button-flat, .paper-icon-button-light, a')) {
       playClickSound();
@@ -134,7 +146,47 @@
   }, { passive: true });
 
   /* =========================================================================
-     2. UNIVERSAL THEME MUSIC AUDIO PIPELINE
+     2. LOCAL SERVER THEME SONG DATABASE (Direct Local /Audio Stream)
+     =========================================================================
+     These stream directly from the local Jellyfin server without requiring auth
+     or external internet access!
+  */
+  const SERVER_THEME_MAP = [
+    { keys: ["3 idiots", "three idiots"], streamUrl: "/Audio/6ba6543f2cbe37cce0d0af6fe3908bab/stream.mp3", title: "3 Idiots" },
+    { keys: ["alice in borderland", "borderland"], streamUrl: "/Audio/6b76cd76c93918931e119b56e0e3faf1/stream.mp3", title: "Alice in Borderland" },
+    { keys: ["avengers", "the avengers"], streamUrl: "/Audio/e9ea5d1e34c6208483fcb4652733ec27/stream.mp3", title: "The Avengers" },
+    { keys: ["bhooth bangla", "bhoot bangla"], streamUrl: "/Audio/441f9392069cb989a20217dc312a6852/stream.mp3", title: "Bhooth Bangla" },
+    { keys: ["breaking bad"], streamUrl: "/Audio/2823a020f96c35d576795c1f5c1a279c/stream.mp3", title: "Breaking Bad" },
+    { keys: ["bridge to terabithia", "terabithia"], streamUrl: "/Audio/99348b19c152a7b853b3c3912ca4271b/stream.mp3", title: "Bridge to Terabithia" },
+    { keys: ["doraemon", "undersea devil"], streamUrl: "/Audio/eab7b766a70eb94640b5b94686b29cb8/stream.mp3", title: "Doraemon" },
+    { keys: ["tokyo drift", "fast and the furious tokyo drift", "fast and furious tokyo drift"], streamUrl: "/Audio/16747c25ad27ab5ea284ed7944e59694/stream.mp3", title: "Tokyo Drift" },
+    { keys: ["final destination"], streamUrl: "/Audio/23b6b8e9667c28be8d8cad1aefd0544f/stream.mp3", title: "Final Destination 5" },
+    { keys: ["slam dunk", "the first slam dunk"], streamUrl: "/Audio/fab5533bff0069ae1d1a81441cc0b8fe/stream.mp3", title: "The First Slam Dunk" },
+    { keys: ["from series", "show from", "series from"], isExactFrom: true, streamUrl: "/Audio/49a9933e90dc941f2cc2efc092f6b79d/stream.mp3", title: "FROM" },
+    { keys: ["googly"], streamUrl: "/Audio/af07178ff6e7a4b737b1a0ecc424152f/stream.mp3", title: "Googly" },
+    { keys: ["grave of the fireflies", "fireflies"], streamUrl: "/Audio/5c0a14098ef7d1b203cf8960cd35c330/stream.mp3", title: "Grave of the Fireflies" },
+    { keys: ["ikka"], streamUrl: "/Audio/5a43e5d384eb514973f8b6c4268f8298/stream.mp3", title: "Ikka" },
+    { keys: ["inception"], streamUrl: "/Audio/22d43c99d7a50607930013b0a4938f35/stream.mp3", title: "Inception" },
+    { keys: ["interstellar"], streamUrl: "/Audio/50574993365efe65be557fa0905a37ae/stream.mp3", title: "Interstellar" },
+    { keys: ["iron man 2"], streamUrl: "/Audio/5b3d5bf75e85c0af0725f72da28c3416/stream.mp3", title: "Iron Man 2" },
+    { keys: ["iron man 3"], streamUrl: "/Audio/93bf19a14de6ae9b87af5c0e9e9c12f4/stream.mp3", title: "Iron Man 3" },
+    { keys: ["iron man", "ironman"], streamUrl: "/Audio/725b5e3a127ad7b950bcf77f4d2689ec/stream.mp3", title: "Iron Man" },
+    { keys: ["jai ho"], streamUrl: "/Audio/a67123e5ca2fa34d2cfe359c29c3bb25/stream.mp3", title: "Jai Ho" },
+    { keys: ["jailer"], streamUrl: "/Audio/b67364625cab6bb82bdaa4e40039007f/stream.mp3", title: "Jailer 2" },
+    { keys: ["kalki", "kalki 2898", "bhairava"], streamUrl: "/Audio/7ef3fd66216d0176e3347d61c5f11aeb/stream.mp3", title: "Kalki 2898-AD" },
+    { keys: ["dhoni", "ms dhoni", "m.s. dhoni", "untold story"], streamUrl: "/Audio/af07545b6b0ad4e8402d920403a50b79/stream.mp3", title: "M.S. Dhoni" },
+    { keys: ["phata poster", "nikhla hero", "agal bagal"], streamUrl: "/Audio/4052aae360684c5f2b5ebd9749192afc/stream.mp3", title: "Phata Poster Nikhla Hero" },
+    { keys: ["spider-man", "spiderman", "brand new day"], streamUrl: "/Audio/910b987f1bb263e83d97144174d24cb5/stream.mp3", title: "Spider-Man" },
+    { keys: ["stranger things"], streamUrl: "/Audio/6e9a17cac145d8d51f55e106a5e1e67f/stream.mp3", title: "Stranger Things" },
+    { keys: ["princess kaguya", "kaguya"], streamUrl: "/Audio/c7c526c5506d6cb4a81b98df51f5db6c/stream.mp3", title: "The Tale of The Princess Kaguya" },
+    { keys: ["toxic"], streamUrl: "/Audio/60594c74acdd6dd572ebd37773a751bd/stream.mp3", title: "Toxic" },
+    { keys: ["udta teer"], streamUrl: "/Audio/3bcaf0d6219288c7794fbb2cb9f85937/stream.mp3", title: "Udta Teer" },
+    { keys: ["visionquest", "vision quest"], streamUrl: "/Audio/aa9cfb350481d949dccf870b06d5d054/stream.mp3", title: "VisionQuest" },
+    { keys: ["your name", "kimi no na wa"], streamUrl: "/Audio/de6b56676a3c8a3ab1ca0563d1421014/stream.mp3", title: "Your Name." }
+  ];
+
+  /* =========================================================================
+     3. UNIVERSAL THEME MUSIC AUDIO PIPELINE
      ========================================================================= */
   let globalAudio = document.getElementById('aetherfin-global-audio');
   if (!globalAudio) {
@@ -152,7 +204,7 @@
   let fadeTimer = null;
   let audioUnlocked = false;
 
-  // Universal audio unlock for Desktop, Touch (Phone) AND TV Remote (keydown)
+  // Unlocks audio on Desktop, Touch (Mobile) and Remote Control (TV)
   function unlockAudioEngine() {
     if (audioUnlocked) return;
     try {
@@ -169,10 +221,38 @@
     } catch (e) {}
   }
 
-  // Listen to remote keys (D-pad, OK, etc.), touch, and click
   ['keydown', 'touchstart', 'touchend', 'click', 'pointerdown'].forEach(evt => {
     document.addEventListener(evt, unlockAudioEngine, { passive: true });
   });
+
+  function normalize(str) {
+    if (!str) return '';
+    return str.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function findThemeForText(text) {
+    if (!text) return null;
+    const norm = normalize(text);
+    if (!norm) return null;
+
+    if (norm === "from" || norm.startsWith("from ") || norm.endsWith(" from")) {
+      return { title: "FROM", url: "/Audio/49a9933e90dc941f2cc2efc092f6b79d/stream.mp3" };
+    }
+
+    for (const item of SERVER_THEME_MAP) {
+      if (item.isExactFrom) continue;
+      for (const k of item.keys) {
+        const normKey = normalize(k);
+        if (norm.includes(normKey)) {
+          return {
+            title: item.title,
+            url: item.streamUrl
+          };
+        }
+      }
+    }
+    return null;
+  }
 
   function stopMusic(fadeMs = 250) {
     if (!activeTheme && globalAudio.paused) return;
@@ -183,7 +263,7 @@
 
     const stepMs = 25;
     const steps = Math.max(1, fadeMs / stepMs);
-    const volStep = (globalAudio.volume || 0.2) / steps;
+    const volStep = (globalAudio.volume || 0.35) / steps;
 
     fadeTimer = setInterval(() => {
       try {
@@ -201,7 +281,8 @@
     }, stepMs);
   }
 
-  function playTheme(theme, targetVolume = 0.22) {
+  // Target volume increased to 0.35 for rich, clear sound
+  function playTheme(theme, targetVolume = 0.35) {
     if (isMuted || !theme) return;
     if (activeTheme && activeTheme.url === theme.url && !globalAudio.paused) {
       return; // Already playing this track
@@ -220,19 +301,19 @@
       globalAudio.pause();
       globalAudio.src = theme.url;
       globalAudio.loop = true;
-      globalAudio.volume = 0.04;
+      globalAudio.volume = 0.05;
 
       const playPromise = globalAudio.play();
       if (playPromise !== undefined) {
         playPromise.then(() => {
           audioUnlocked = true;
-          let currentVol = 0.04;
+          let currentVol = 0.05;
           const fadeIn = setInterval(() => {
             if (!activeTheme || activeTheme.url !== theme.url) {
               clearInterval(fadeIn);
               return;
             }
-            currentVol += 0.03;
+            currentVol += 0.04;
             if (currentVol >= targetVolume) {
               globalAudio.volume = targetVolume;
               clearInterval(fadeIn);
@@ -241,7 +322,7 @@
             }
           }, 35);
         }).catch((err) => {
-          console.log("[AetherFin] Autoplay waiting for user gesture (key/touch):", err.message);
+          console.log("[AetherFin] Autoplay waiting for user gesture:", err.message);
           const resumeOnGesture = () => {
             if (activeTheme && activeTheme.url === theme.url && globalAudio.paused) {
               globalAudio.play().catch(() => {});
@@ -261,19 +342,27 @@
   }
 
   /* =========================================================================
-     3. DYNAMIC SERVER THEME SONG QUERY & CACHING
+     4. THEME RESOLVER (Local Server Map + Dynamic ApiClient Fallback)
      ========================================================================= */
   const themeCache = {};
 
   function resolveThemeForItem(itemId, title, callback) {
+    // 1. Instant check against local server title map (0 latency, 0 auth)
+    const localTheme = findThemeForText(title);
+    if (localTheme) {
+      callback(localTheme);
+      return;
+    }
+
+    // 2. Check in-memory cache
     if (itemId && themeCache[itemId] !== undefined) {
       callback(themeCache[itemId]);
       return;
     }
 
-    if (itemId) {
-      fetch(`/Items/${itemId}/ThemeSongs`, { credentials: 'same-origin' })
-        .then(r => r.json())
+    // 3. Dynamic query using window.ApiClient (authenticated)
+    if (window.ApiClient && itemId) {
+      window.ApiClient.getJSON(window.ApiClient.getUrl('Items/' + itemId + '/ThemeSongs'))
         .then(data => {
           const items = data.Items || [];
           if (items.length > 0) {
@@ -298,7 +387,7 @@
   }
 
   /* =========================================================================
-     4. DETAIL PAGE NAVIGATION & CARD INTERACTION
+     5. DETAIL PAGE NAVIGATION & CARD INTERACTION
      ========================================================================= */
   let isNavigatingToDetail = false;
 
@@ -341,7 +430,7 @@
       resolveThemeForItem(itemId, title, (theme) => {
         if (theme) {
           isNavigatingToDetail = true;
-          playTheme(theme, 0.24);
+          playTheme(theme, 0.35);
           setTimeout(() => { isNavigatingToDetail = false; }, 3500);
         }
       });
@@ -355,7 +444,7 @@
   document.addEventListener('click', (e) => { onCardClicked(e.target); }, true);
   document.addEventListener('touchend', (e) => { if (e.target) onCardClicked(e.target); }, { passive: true });
 
-  // Intercept TV Remote D-Pad Enter / OK key
+  // TV Remote OK / Enter key
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === 'Select' || e.keyCode === 13) {
       const activeEl = document.activeElement;
@@ -382,7 +471,7 @@
       resolveThemeForItem(itemId, title, (theme) => {
         if (theme) {
           if (!activeTheme || activeTheme.url !== theme.url || globalAudio.paused) {
-            playTheme(theme, 0.22);
+            playTheme(theme, 0.35);
           }
         }
       });
@@ -400,7 +489,7 @@
   routeObserver.observe(document.body, { childList: true, subtree: true });
 
   /* =========================================================================
-     5. RESPONSIVE HOVER (DESKTOP) & FOCUS DWELL (TV REMOTE D-PAD)
+     6. RESPONSIVE HOVER (DESKTOP) & FOCUS DWELL (TV REMOTE D-PAD)
      ========================================================================= */
   let dwellTimer = null;
   let currentActiveCard = null;
@@ -421,7 +510,7 @@
           resolveThemeForItem(itemId, title, (theme) => {
             if (currentActiveCard === cardContainer && !isCurrentlyOnDetailPage()) {
               if (theme) {
-                playTheme(theme, 0.18);
+                playTheme(theme, 0.28);
               } else {
                 stopMusic(200);
               }
@@ -445,7 +534,7 @@
     }
   }
 
-  // 1. Mouse hover events (Desktop)
+  // 1. Mouse hover (Desktop)
   if (!isMobile && !isTV) {
     document.addEventListener('mouseover', (e) => {
       const card = e.target.closest('.card, .cardBox, .listItem');
@@ -462,7 +551,7 @@
     }, { passive: true });
   }
 
-  // 2. Focus events (TV Remote Control D-pad & Keyboard)
+  // 2. Focus events (TV Remote D-Pad & Keyboard)
   document.addEventListener('focusin', (e) => {
     const card = e.target.closest('.card, .cardBox, .listItem');
     if (card) {
@@ -478,7 +567,7 @@
   }, { passive: true });
 
   /* =========================================================================
-     6. FLOATING AUDIO PILL (BOTTOM-RIGHT)
+     7. FLOATING AUDIO PILL (BOTTOM-RIGHT)
      ========================================================================= */
   const uiStyles = document.createElement('style');
   uiStyles.textContent = `
