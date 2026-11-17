@@ -17,6 +17,15 @@ A bespoke visual theme and interactive audio suite designed specifically for **J
   * Full-width animated hero spotlight banner at the top of your Home screen.
   * Displays high-res backdrops, clear logo artwork, synopsis, and instant "Play" action buttons.
   * Styled with Zombie's official frosted Marquee layouts for desktop, tablet, and mobile.
+* **🏆 Family Wall of Fame & Live Activity Dashboard:**
+  * **Real-time Family Activity Feed:** Live "Who Watched What" timeline across all household members (`admin`, `TV`, `prem`, `hacker`) with direct links to play or inspect any watched title.
+  * **Interactive Leaderboard:** Ranks family members by total completed titles (👑 Champion, ⚡ Movie Master, 📺 Living Room Legend, ⭐ Cinema Explorer).
+  * **Smart Filter Tabs:** Filter watch history by Movies, Series, or individual family member profiles.
+  * **Universal Access:** Click the `🏆 Wall of Fame` pill at the bottom-right or the integrated button in the Jellyfin top navigation bar.
+* **🎉 Movie Finished Celebration & Achievement Fanfare:**
+  * **Victory Brass Fanfare:** Triumphant synthesized Web Audio orchestral brass progression on movie/episode finish (100% code, zero audio downloads).
+  * **Golden Confetti Cannon:** Shimmering particle burst across your screen celebrating completed movies.
+  * **Frosted Achievement Toast:** Displays completion notification card with 1-click access to the Wall of Fame.
 * **🔊 Synthesized UI Sound Effects (0 Audio Files Needed):**
   * **Tactile Bubble/Pop Hover Chimes:** High-tech acoustic pop chime (`520Hz` $\rightarrow$ `700Hz` with crystal harmonics) on card hover and TV remote D-pad focus.
   * **Apple TV Mechanical Clicks:** Crisp `840Hz` tactile snap feedback on item taps and clicks.
